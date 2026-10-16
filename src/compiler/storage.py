@@ -28,6 +28,10 @@ class StorageEngine:
         lines_data = []
         signs_data = []
 
+        kmers_data = []
+        from src.joins.kmer import KmerIndexer
+        indexer = KmerIndexer(k=4)
+
         for tab in tablets:
             tablets_data.append({
                 "id_text": tab.id_text,
@@ -40,6 +44,14 @@ class StorageEngine:
             })
 
             for line in tab.lines:
+                line_kmers = indexer.extract_char_kmers(line.normalized_text)
+                for km in line_kmers:
+                    kmers_data.append({
+                        "id_line": line.id_line,
+                        "id_text": line.id_text,
+                        "kmer": km,
+                    })
+
                 lines_data.append({
                     "id_line": line.id_line,
                     "id_text": line.id_text,
@@ -50,6 +62,7 @@ class StorageEngine:
                     "normalized_text": line.normalized_text,
                     "is_damaged": line.is_damaged,
                     "sign_count": len(line.signs),
+                    "kmer_count": len(line_kmers),
                 })
 
                 for sign in line.signs:
@@ -67,16 +80,19 @@ class StorageEngine:
         df_tablets = pd.DataFrame(tablets_data)
         df_lines = pd.DataFrame(lines_data)
         df_signs = pd.DataFrame(signs_data)
+        df_kmers = pd.DataFrame(kmers_data)
 
         paths = {
             "tablets": os.path.join(output_dir, "tablets.parquet"),
             "lines": os.path.join(output_dir, "lines.parquet"),
             "signs": os.path.join(output_dir, "signs.parquet"),
+            "kmers": os.path.join(output_dir, "kmers.parquet"),
         }
 
         df_tablets.to_parquet(paths["tablets"], index=False)
         df_lines.to_parquet(paths["lines"], index=False)
         df_signs.to_parquet(paths["signs"], index=False)
+        df_kmers.to_parquet(paths["kmers"], index=False)
 
         # Ingest into DuckDB
         self._ingest_to_duckdb(paths)

@@ -17,6 +17,7 @@ def test_storage_export_and_query(tmp_path):
     assert os.path.exists(parquet_paths["tablets"])
     assert os.path.exists(parquet_paths["lines"])
     assert os.path.exists(parquet_paths["signs"])
+    assert os.path.exists(parquet_paths["kmers"])
     assert os.path.exists(db_path)
 
     # Test SQL execution
@@ -25,3 +26,7 @@ def test_storage_export_and_query(tmp_path):
 
     df_signs = storage.query("SELECT sign_type, COUNT(*) as cnt FROM signs GROUP BY sign_type ORDER BY cnt DESC;")
     assert not df_signs.empty
+
+    df_kmers = storage.query("SELECT kmer, COUNT(*) as freq FROM kmers GROUP BY kmer ORDER BY freq DESC LIMIT 5;")
+    assert not df_kmers.empty
+    assert len(df_kmers) <= 5

@@ -23,3 +23,26 @@ def test_full_pipeline_run(tmp_path):
     assert os.path.exists(os.path.join(out_dir, "transactions.parquet"))
     assert os.path.exists(os.path.join(out_dir, "officer_balances.parquet"))
     assert os.path.exists(os.path.join(out_dir, "browser.html"))
+
+
+def test_selective_tool_runs(tmp_path):
+    out_dir = str(tmp_path / "proc_tools")
+    # Test Tool 1: kmer-parquet
+    run_pipeline(
+        input_atf="data/raw/sample_cdli.atf",
+        output_dir=out_dir,
+        generate_browser=False,
+        tool="kmer-parquet",
+    )
+    assert os.path.exists(os.path.join(out_dir, "kmers.parquet"))
+    assert os.path.exists(os.path.join(out_dir, "nisaba.duckdb"))
+
+    # Test Tool 4: ledger
+    run_pipeline(
+        input_atf="data/raw/sample_cdli.atf",
+        output_dir=out_dir,
+        generate_browser=False,
+        tool="ledger",
+    )
+    assert os.path.exists(os.path.join(out_dir, "transactions.parquet"))
+    assert os.path.exists(os.path.join(out_dir, "officer_balances.parquet"))

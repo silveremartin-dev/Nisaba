@@ -32,104 +32,88 @@ def run_pipeline(
     input_atf: str = "data/raw/sample_cdli.atf",
     output_dir: str = "data/processed",
     generate_browser: bool = True,
+    tool: str = "all",
 ) -> None:
-    """Executes the full Nisaba analytical pipeline."""
+    """Executes the full Nisaba analytical pipeline or an isolated tool."""
     print("=" * 70)
-    print("[*] NISABA: Computational Engine for Sumerian Cuneiform")
+    print(f"[*] NISABA: Computational Engine for Sumerian Cuneiform [Tool: {tool}]")
     print("=" * 70)
 
     if not os.path.exists(input_atf):
-        print(f"❌ Error: Input file '{input_atf}' not found.")
+        print(f"[-] Error: Input file '{input_atf}' not found.")
         sys.exit(1)
 
     os.makedirs(output_dir, exist_ok=True)
 
-    # 1. Compilation
-    print(f"\n[1/6] Ingesting & Compiling ATF: {input_atf}")
+    # Ingestion is foundational
     parser = ATFParser()
     tablets = parser.parse_file(input_atf)
-    print(f"      -> Ingested {len(tablets)} tablets.")
 
-    db_path = os.path.join(output_dir, "nisaba.duckdb")
-    storage = StorageEngine(db_path=db_path)
-    parquet_paths = storage.export_tables(tablets, output_dir=output_dir)
-    print(f"      -> Exported Parquet: {list(parquet_paths.keys())}")
-    print(f"      -> Mounted DuckDB: {db_path}")
+    # Tool 1: Kmer Parquet Engine (Compilation & Storage)
+    if tool in ("all", "kmer-parquet"):
+        print(f"\n[Tool 1/5: K-mer Parquet Engine] Compiling ATF: {input_atf}")
+        print(f"      -> Ingested {len(tablets)} tablets.")
+        db_path = os.path.join(output_dir, "nisaba.duckdb")
+        storage = StorageEngine(db_path=db_path)
+        parquet_paths = storage.export_tables(tablets, output_dir=output_dir)
+        print(f"      -> Exported Columnar Parquet: {list(parquet_paths.keys())}")
+        print(f"      -> Mounted DuckDB Database  : {db_path}")
 
-    # 2. Linter
-    print("\n[2/6] Running Morphosyntactic & Bracket Linter...")
-    linter = LinterEngine()
-    linter_report = linter.audit_corpus(tablets)
-    print(f"      -> Tablets Audited : {linter_report.total_tablets_audited}")
-    print(f"      -> Pass Rate        : {linter_report.pass_rate:.1f}%")
-    print(f"      -> Errors Detected  : {linter_report.total_errors}")
-    print(f"      -> Warnings         : {linter_report.total_warnings}")
+        # Linter sub-audit
+        linter = LinterEngine()
+        linter_report = linter.audit_corpus(tablets)
+        print(f"      -> Morphosyntactic Pass Rate: {linter_report.pass_rate:.1f}%")
+    else:
+        linter_report = None
 
-    df_issues = linter_report.to_dataframe()
-    if not df_issues.empty:
-        issues_path = os.path.join(output_dir, "linter_issues.parquet")
-        df_issues.to_parquet(issues_path, index=False)
-        print(f"      -> Saved issues: {issues_path}")
+    # Tool 2: Orphan Tablet Resolver (Chronos Macro-Chronology + Scribe Identification)
+    estimates = None
+    attributions = None
+    if tool in ("all", "orphan-resolver"):
+        print("\n[Tool 2/5: Orphan Tablet Resolver] Solving Dates & Scribe Lineages...")
+        solver = ChronosSolver()
+        estimates = solver.fit_and_resolve(tablets)
+        dated_count = sum(1 for e in estimates if e.status == "CERTIFIED_DATED")
+        inferred_count = sum(1 for e in estimates if e.status == "ESTIMATED")
+        print(f"      -> Certified Dates  : {dated_count}")
+        print(f"      -> Inferred Dates   : {inferred_count}")
+        solver.to_dataframe(estimates).to_parquet(os.path.join(output_dir, "chronos_estimates.parquet"), index=False)
 
-    # 3. Chronos Macro-Chronology
-    print("\n[3/7] Solving Macro-Chronology & Undated Tablets...")
-    solver = ChronosSolver()
-    estimates = solver.fit_and_resolve(tablets)
-    dated_count = sum(1 for e in estimates if e.status == "CERTIFIED_DATED")
-    inferred_count = sum(1 for e in estimates if e.status == "ESTIMATED")
-    print(f"      -> Certified Dates  : {dated_count}")
-    print(f"      -> Inferred Dates   : {inferred_count}")
+        author_id = AuthorIdentifier()
+        attributions = author_id.attribute_corpus(tablets)
+        attr_count = sum(1 for a in attributions if a.identified_scribe is not None)
+        print(f"      -> Attributed Scribes: {attr_count} / {len(tablets)}")
+        author_id.to_dataframe(attributions).to_parquet(os.path.join(output_dir, "author_attributions.parquet"), index=False)
 
-    df_chronos = solver.to_dataframe(estimates)
-    chronos_path = os.path.join(output_dir, "chronos_estimates.parquet")
-    df_chronos.to_parquet(chronos_path, index=False)
-    print(f"      -> Saved estimates: {chronos_path}")
+    # Tool 3: Tablet Joiner (Sequence Alignment & Virtual Joins)
+    joins = None
+    if tool in ("all", "joins"):
+        print("\n[Tool 3/5: Tablet Joiner] Rapprochement de fragments cassés (k-mer BLAST)...")
+        matcher = FragmentMatcher(min_similarity=0.30)
+        joins = matcher.find_joins(tablets)
+        print(f"      -> Candidate Joins Found: {len(joins)}")
+        for j in joins[:3]:
+            print(f"         * {j.id_text_a} <-> {j.id_text_b} (sim: {j.similarity_score:.2f}, type: {j.join_type})")
+        df_joins = matcher.to_dataframe(joins)
+        if not df_joins.empty:
+            df_joins.to_parquet(os.path.join(output_dir, "virtual_joins.parquet"), index=False)
 
-    # 4. Scribe & Author Identification
-    print("\n[4/7] Identifying Ancient Scribes & Authors...")
-    author_id = AuthorIdentifier()
-    attributions = author_id.attribute_corpus(tablets)
-    attributed_count = sum(1 for a in attributions if a.identified_scribe is not None)
-    print(f"      -> Tablets Attributed : {attributed_count} / {len(tablets)}")
-    for a in attributions[:3]:
-        print(f"         * {a.id_text} -> Scribe: {a.identified_scribe} ({a.title}, son of {a.patronymic or 'N/A'}, conf: {a.confidence:.2f})")
+    # Tool 4: Ur III Economic Ledger (Double-Entry Balance Auditor)
+    transactions = None
+    if tool in ("all", "ledger"):
+        print("\n[Tool 4/5: Economic Ledger] Réconciliation comptable d'Ur III...")
+        extractor = LedgerExtractor()
+        transactions = extractor.extract_corpus(tablets)
+        auditor = LedgerAuditor()
+        balances = auditor.compute_balances(transactions)
+        print(f"      -> Transactions Extracted : {len(transactions)}")
+        print(f"      -> Audited Officer Balances: {len(balances)}")
+        extractor.to_dataframe(transactions).to_parquet(os.path.join(output_dir, "transactions.parquet"), index=False)
+        auditor.to_dataframe(balances).to_parquet(os.path.join(output_dir, "officer_balances.parquet"), index=False)
 
-    df_authors = author_id.to_dataframe(attributions)
-    authors_path = os.path.join(output_dir, "author_attributions.parquet")
-    df_authors.to_parquet(authors_path, index=False)
-    print(f"      -> Saved attributions: {authors_path}")
-
-    # 5. Fragment Joins
-    print("\n[5/7] Running Sequence Alignment & Virtual Join Matcher...")
-    matcher = FragmentMatcher(min_similarity=0.30)
-    joins = matcher.find_joins(tablets)
-    print(f"      -> Candidate Joins Found: {len(joins)}")
-    for j in joins[:3]:
-        print(f"         * {j.id_text_a} <-> {j.id_text_b} (sim: {j.similarity_score:.2f}, type: {j.join_type})")
-
-    df_joins = matcher.to_dataframe(joins)
-    if not df_joins.empty:
-        joins_path = os.path.join(output_dir, "virtual_joins.parquet")
-        df_joins.to_parquet(joins_path, index=False)
-        print(f"      -> Saved joins: {joins_path}")
-
-    # 6. Ledger Extraction
-    print("\n[6/7] Extracting Ur III Commodity Transactions & Balances...")
-    extractor = LedgerExtractor()
-    transactions = extractor.extract_corpus(tablets)
-    auditor = LedgerAuditor()
-    balances = auditor.compute_balances(transactions)
-    print(f"      -> Transactions Extracted : {len(transactions)}")
-    print(f"      -> Audited Officer Balances: {len(balances)}")
-
-    df_tx = extractor.to_dataframe(transactions)
-    df_tx.to_parquet(os.path.join(output_dir, "transactions.parquet"), index=False)
-    df_bal = auditor.to_dataframe(balances)
-    df_bal.to_parquet(os.path.join(output_dir, "officer_balances.parquet"), index=False)
-
-    # 7. Tablet Visual Browser
-    if generate_browser:
-        print("\n[7/7] Generating Interactive Tablet Visual Browser...")
+    # Tool 5: Tablet Visual Browser (Interactive HTML)
+    if (tool in ("all", "browser")) and generate_browser:
+        print("\n[Tool 5/5: Tablet Visual Browser] Generating Interactive Viewer...")
         renderer = TabletBrowserRenderer()
         html_out = os.path.join(output_dir, "browser.html")
         renderer.render_corpus(
@@ -144,12 +128,14 @@ def run_pipeline(
         print(f"      -> Browser generated: {html_out}")
 
     print("\n" + "=" * 70)
-    print("[OK] NISABA PIPELINE COMPLETED SUCCESSFULLY")
+    print(f"[OK] NISABA EXECUTION FINISHED: Tool '{tool}' Complete")
     print("=" * 70)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Nisaba Cuneiform Computational Pipeline")
+    parser = argparse.ArgumentParser(description="Nisaba Cuneiform Computational Suite (5 Tools)")
+    parser.add_argument("--tool", default="all", choices=["all", "kmer-parquet", "orphan-resolver", "joins", "ledger", "browser"],
+                        help="Select one of the 5 Nisaba tools to execute")
     parser.add_argument("--input", default="data/raw/sample_cdli.atf", help="Path to input CDLI ATF file")
     parser.add_argument("--output_dir", default="data/processed", help="Path to output processed directory")
     parser.add_argument("--no_browser", action="store_true", help="Skip generating HTML browser")
@@ -159,6 +145,7 @@ def main():
         input_atf=args.input,
         output_dir=args.output_dir,
         generate_browser=not args.no_browser,
+        tool=args.tool,
     )
 
 
