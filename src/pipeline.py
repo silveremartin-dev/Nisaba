@@ -21,6 +21,7 @@ from src.compiler.parser import ATFParser
 from src.compiler.storage import StorageEngine
 from src.linter.engine import LinterEngine
 from src.chronos.solver import ChronosSolver
+from src.authors.scribe_identifier import AuthorIdentifier
 from src.joins.matcher import FragmentMatcher
 from src.ledger.extractor import LedgerExtractor
 from src.ledger.auditor import LedgerAuditor
@@ -71,7 +72,7 @@ def run_pipeline(
         print(f"      -> Saved issues: {issues_path}")
 
     # 3. Chronos Macro-Chronology
-    print("\n[3/6] Solving Macro-Chronology & Undated Tablets...")
+    print("\n[3/7] Solving Macro-Chronology & Undated Tablets...")
     solver = ChronosSolver()
     estimates = solver.fit_and_resolve(tablets)
     dated_count = sum(1 for e in estimates if e.status == "CERTIFIED_DATED")
@@ -84,8 +85,22 @@ def run_pipeline(
     df_chronos.to_parquet(chronos_path, index=False)
     print(f"      -> Saved estimates: {chronos_path}")
 
-    # 4. Fragment Joins
-    print("\n[4/6] Running Sequence Alignment & Virtual Join Matcher...")
+    # 4. Scribe & Author Identification
+    print("\n[4/7] Identifying Ancient Scribes & Authors...")
+    author_id = AuthorIdentifier()
+    attributions = author_id.attribute_corpus(tablets)
+    attributed_count = sum(1 for a in attributions if a.identified_scribe is not None)
+    print(f"      -> Tablets Attributed : {attributed_count} / {len(tablets)}")
+    for a in attributions[:3]:
+        print(f"         * {a.id_text} -> Scribe: {a.identified_scribe} ({a.title}, son of {a.patronymic or 'N/A'}, conf: {a.confidence:.2f})")
+
+    df_authors = author_id.to_dataframe(attributions)
+    authors_path = os.path.join(output_dir, "author_attributions.parquet")
+    df_authors.to_parquet(authors_path, index=False)
+    print(f"      -> Saved attributions: {authors_path}")
+
+    # 5. Fragment Joins
+    print("\n[5/7] Running Sequence Alignment & Virtual Join Matcher...")
     matcher = FragmentMatcher(min_similarity=0.30)
     joins = matcher.find_joins(tablets)
     print(f"      -> Candidate Joins Found: {len(joins)}")
@@ -98,8 +113,8 @@ def run_pipeline(
         df_joins.to_parquet(joins_path, index=False)
         print(f"      -> Saved joins: {joins_path}")
 
-    # 5. Ledger Extraction
-    print("\n[5/6] Extracting Ur III Commodity Transactions & Balances...")
+    # 6. Ledger Extraction
+    print("\n[6/7] Extracting Ur III Commodity Transactions & Balances...")
     extractor = LedgerExtractor()
     transactions = extractor.extract_corpus(tablets)
     auditor = LedgerAuditor()
@@ -112,9 +127,9 @@ def run_pipeline(
     df_bal = auditor.to_dataframe(balances)
     df_bal.to_parquet(os.path.join(output_dir, "officer_balances.parquet"), index=False)
 
-    # 6. Tablet Visual Browser
+    # 7. Tablet Visual Browser
     if generate_browser:
-        print("\n[6/6] Generating Interactive Tablet Visual Browser...")
+        print("\n[7/7] Generating Interactive Tablet Visual Browser...")
         renderer = TabletBrowserRenderer()
         html_out = os.path.join(output_dir, "browser.html")
         renderer.render_corpus(
@@ -123,6 +138,7 @@ def run_pipeline(
             estimates=estimates,
             joins=joins,
             transactions=transactions,
+            attributions=attributions,
             output_filepath=html_out,
         )
         print(f"      -> Browser generated: {html_out}")

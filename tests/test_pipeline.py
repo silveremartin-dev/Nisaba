@@ -19,6 +19,7 @@ def test_full_pipeline_run(tmp_path):
     assert os.path.exists(os.path.join(out_dir, "signs.parquet"))
     assert os.path.exists(os.path.join(out_dir, "nisaba.duckdb"))
     assert os.path.exists(os.path.join(out_dir, "chronos_estimates.parquet"))
+    assert os.path.exists(os.path.join(out_dir, "author_attributions.parquet"))
     assert os.path.exists(os.path.join(out_dir, "transactions.parquet"))
     assert os.path.exists(os.path.join(out_dir, "officer_balances.parquet"))
     assert os.path.exists(os.path.join(out_dir, "browser.html"))

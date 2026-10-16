@@ -149,6 +149,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             <strong>Macro-Chronology:</strong> {{ t.chronos_status }}<br>
                             <strong>Resolved Date:</strong> {{ t.date_code or 'Pending Resolution' }} (Confidence: {{ t.date_confidence }})
                         </div>
+                        <div class="status-box box-clean" style="border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.08);">
+                            <strong>✍️ Scribe / Author:</strong> {{ t.author_name or 'Unattributed' }}<br>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">Title: {{ t.author_title }} • Patronymic: {{ t.author_father }} • Conf: {{ t.author_conf }}</span>
+                        </div>
                         {% if t.lint_issues %}
                         <div class="status-box box-issues">
                             <strong>⚠️ Linter Findings ({{ t.lint_issues | length }}):</strong>
@@ -235,6 +239,7 @@ class TabletBrowserRenderer:
         estimates: Optional[List[ChronosEstimate]] = None,
         joins: Optional[List[JoinCandidate]] = None,
         transactions: Optional[List[TransactionRecord]] = None,
+        attributions: Optional[list] = None,
         output_filepath: str = "data/processed/browser.html",
     ) -> str:
         """Compiles tablet data into an interactive HTML application."""
@@ -242,6 +247,7 @@ class TabletBrowserRenderer:
 
         # Index estimates by id_text
         est_map = {e.id_text: e for e in (estimates or [])}
+        attr_map = {a.id_text: a for a in (attributions or [])}
 
         # Index linter issues by id_text
         lint_map = {}
@@ -269,6 +275,12 @@ class TabletBrowserRenderer:
             chronos_status = est.status if est else "UNEVALUATED"
             date_conf = f"{int((est.confidence or 0.0) * 100)}%" if est else "N/A"
 
+            attr = attr_map.get(tab.id_text)
+            author_name = attr.identified_scribe if attr else None
+            author_title = attr.title or "dub-sar" if attr else "N/A"
+            author_father = attr.patronymic or "Unrecorded" if attr else "N/A"
+            author_conf = f"{int((attr.confidence or 0.0) * 100)}%" if attr else "N/A"
+
             surfaces: Dict[str, List[dict]] = {}
             officials_set = set()
 
@@ -293,6 +305,10 @@ class TabletBrowserRenderer:
                 "date_code": date_code,
                 "chronos_status": chronos_status,
                 "date_confidence": date_conf,
+                "author_name": author_name,
+                "author_title": author_title,
+                "author_father": author_father,
+                "author_conf": author_conf,
                 "officials": sorted(list(officials_set))[:5],
                 "lint_issues": lint_map.get(tab.id_text, []),
                 "joins_count": joins_count_map.get(tab.id_text, 0),
