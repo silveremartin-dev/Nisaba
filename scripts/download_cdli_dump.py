@@ -7,6 +7,9 @@ import os
 import sys
 import requests
 
+if sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 
 CDLI_DUMP_URL = "https://github.com/cdli-gh/data/raw/master/cdliatf_unblocked.atf"
 DEFAULT_TARGET = "data/raw/cdliatf_unblocked.atf"

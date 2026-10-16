@@ -20,5 +20,5 @@ def test_browser_renderer_output(tmp_path):
 
     assert "P100001" in html
     assert "Nisaba" in html
-    assert "https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100001.jpg" in html
+    assert "P100001.jpg" in html
     assert "tok-num" in html

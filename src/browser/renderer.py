@@ -177,9 +177,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
                     <div class="panel photo-container">
                         <h3>📷 Tablet Artifact Archive</h3>
-                        <img src="https://cdli.mpiwg-berlin.mpg.de/dl/photo/{{ t.id_text }}.jpg" alt="Tablet photo {{ t.id_text }}" onerror="this.onerror=null; this.src='https://placehold.co/400x250/1e293b/38bdf8?text=Image+Archive+CDLI+{{ t.id_text }}';">
+                        <img src="../assets/real_tablets/{{ t.id_text }}.jpg" alt="Tablet photo {{ t.id_text }}" onerror="this.onerror=null; this.src='https://cdli.earth/dl/photo/{{ t.id_text }}.jpg';">
                         <div>
-                            <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/dl/photo/{{ t.id_text }}.jpg" target="_blank">🔍 View Full Resolution Scan ↗</a>
+                            <a class="cdli-link" href="https://cdli.earth/dl/photo/{{ t.id_text }}.jpg" target="_blank">🔍 View Full Resolution Scan ↗</a>
                         </div>
                     </div>
                 </div>
@@ -205,6 +205,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 item.style.display = text.includes(query) ? 'block' : 'none';
             });
         }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.replace('#', '');
+            if (hash) {
+                selectTablet(hash);
+            }
+        });
     </script>
 </body>
 </html>

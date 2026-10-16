@@ -45,8 +45,10 @@ data/processed/*.parquet
 data/processed/*.duckdb
 data/processed/*.arrow
 data/processed/reports/
+data/processed/benchmark/
 
 # Scratch & Logs
+assets/real_screenshots/
 scratch/*.tmp
 scratch/*.log
 scratch/*.png
