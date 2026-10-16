@@ -46,6 +46,6 @@ def test_linter_corpus_report():
     linter = LinterEngine()
     report = linter.audit_corpus(tablets)
 
-    assert report.total_tablets_audited == 7
+    assert report.total_tablets_audited == 15
     assert report.total_lines_audited > 0
     assert isinstance(report.pass_rate, float)

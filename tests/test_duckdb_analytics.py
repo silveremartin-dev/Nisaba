@@ -23,7 +23,7 @@ def test_duckdb_advanced_sql(tmp_path):
         ORDER BY num_lines DESC;
     """
     df_res = storage.query(sql_lines_per_tablet)
-    assert len(df_res) == 7
+    assert len(df_res) == 15
     assert df_res.iloc[0]["num_lines"] >= 4
 
     # 2. Sign distribution analysis

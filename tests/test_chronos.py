@@ -37,7 +37,7 @@ def test_chronos_solver_undated_tablet():
     solver = ChronosSolver()
     estimates = solver.fit_and_resolve(tablets)
 
-    assert len(estimates) == 7
+    assert len(estimates) == 15
 
     # P100001 has certified date
     e1 = next(e for e in estimates if e.id_text == "P100001")

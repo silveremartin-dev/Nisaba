@@ -8,7 +8,7 @@ def test_parser_sample_tablet():
     parser = ATFParser()
     tablets = parser.parse_file("data/raw/sample_cdli.atf")
 
-    assert len(tablets) == 7
+    assert len(tablets) == 15
     t1 = tablets[0]
     assert t1.id_text == "P100001"
     assert t1.designation == "AAS 001"

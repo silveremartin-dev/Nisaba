@@ -22,7 +22,7 @@ def test_storage_export_and_query(tmp_path):
 
     # Test SQL execution
     df_count = storage.query("SELECT COUNT(*) AS total_tablets FROM tablets;")
-    assert df_count.iloc[0]["total_tablets"] == 7
+    assert df_count.iloc[0]["total_tablets"] == 15
 
     df_signs = storage.query("SELECT sign_type, COUNT(*) as cnt FROM signs GROUP BY sign_type ORDER BY cnt DESC;")
     assert not df_signs.empty

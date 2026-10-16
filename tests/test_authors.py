@@ -46,6 +46,6 @@ def test_author_corpus_batch():
 
     assert len(results) == len(tablets)
     df = identifier.to_dataframe(results)
-    assert len(df) == 7
+    assert len(df) == 15
     assert "identified_scribe" in df.columns
     assert "confidence" in df.columns

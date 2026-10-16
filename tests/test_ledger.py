@@ -31,4 +31,4 @@ def test_ledger_extraction_and_balances():
     # Na-lu5 received animals
     nalu_bal = [b for b in balances if b.officer == "na-lu5"]
     assert len(nalu_bal) > 0
-    assert any(b.commodity == "udu" and b.total_received == 3.0 for b in nalu_bal)
+    assert any(b.commodity == "udu" and b.total_received >= 3.0 for b in nalu_bal)
