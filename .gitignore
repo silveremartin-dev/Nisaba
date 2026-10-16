@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Data & Large Corpus Artifacts (Do not commit multi-gigabyte or bulk dumps)
+data/raw/*.atf
+data/raw/*.zip
+data/raw/*.tar.gz
+data/raw/*.json
+!data/raw/sample_cdli.atf
+data/processed/*.parquet
+data/processed/*.duckdb
+data/processed/*.arrow
+data/processed/reports/
+
+# Scratch & Logs
+scratch/*.tmp
+scratch/*.log
+scratch/*.png
+scratch/*.jpg
+*.log
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini

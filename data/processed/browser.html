@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nisaba — Tablet Visual Explorer</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #38bdf8;
+            --accent-gold: #fbbf24;
+            --accent-green: #4ade80;
+            --accent-red: #f87171;
+            --border: #475569;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg-primary); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar */
+        #sidebar { width: 340px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
+        .sidebar-header h1 { font-size: 1.3rem; color: var(--accent-gold); display: flex; align-items: center; gap: 8px; }
+        .sidebar-header p { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+        .search-box { padding: 12px 20px; border-bottom: 1px solid var(--border); }
+        .search-box input { width: 100%; padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 0.85rem; }
+        .tablet-list { flex: 1; overflow-y: auto; list-style: none; }
+        .tablet-item { padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.15s; }
+        .tablet-item:hover, .tablet-item.active { background: var(--bg-card); }
+        .item-id { font-weight: bold; color: var(--accent-cyan); font-size: 0.95rem; }
+        .item-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .badge-clean { background: rgba(74, 222, 128, 0.15); color: var(--accent-green); }
+        .badge-error { background: rgba(248, 113, 113, 0.15); color: var(--accent-red); }
+        .badge-date { background: rgba(251, 191, 36, 0.15); color: var(--accent-gold); }
+
+        /* Main Workspace */
+        #workspace { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-primary); }
+        .workspace-header { padding: 20px 30px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .header-title h2 { font-size: 1.5rem; color: #fff; }
+        .header-title p { font-size: 0.85rem; color: var(--text-muted); }
+        
+        .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 30px; }
+        
+        .panel { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+        .panel h3 { font-size: 1.05rem; margin-bottom: 16px; color: var(--accent-cyan); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        
+        /* Transliteration */
+        .surface-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent-gold); margin: 12px 0 6px 0; }
+        .line-row { display: flex; gap: 12px; font-family: "Courier New", Courier, monospace; font-size: 0.9rem; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .line-no { color: var(--text-muted); width: 35px; text-align: right; user-select: none; }
+        .line-text { color: #e2e8f0; flex: 1; }
+        .tok-num { color: var(--accent-gold); font-weight: bold; }
+        .tok-official { color: var(--accent-cyan); text-decoration: underline; }
+        .tok-broken { color: var(--accent-red); opacity: 0.8; }
+        .tok-comm { color: var(--accent-green); }
+
+        /* CDLI Image Section */
+        .photo-container { text-align: center; }
+        .photo-container img { max-width: 100%; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px; background: #000; }
+        .cdli-link { display: inline-block; font-size: 0.8rem; color: var(--accent-cyan); text-decoration: none; margin-top: 8px; }
+        .cdli-link:hover { text-decoration: underline; }
+
+        /* Status Cards */
+        .status-box { padding: 12px; border-radius: 6px; margin-bottom: 14px; font-size: 0.85rem; }
+        .box-clean { background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); color: #86efac; }
+        .box-issues { background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); color: #fca5a5; }
+        .box-chronos { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #7dd3fc; }
+        
+        .meta-list { list-style: none; font-size: 0.85rem; }
+        .meta-list li { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; }
+        .meta-list span.val { font-weight: bold; color: #fff; }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <h1>📜 Nisaba Browser</h1>
+            <p>Ur III Cuneiform Visual Explorer</p>
+        </div>
+        <div class="search-box">
+            <input type="text" id="filterInput" placeholder="Filter P-number (e.g. P100001)..." onkeyup="filterTablets()">
+        </div>
+        <ul class="tablet-list" id="tabletList">
+            
+            <li class="tablet-item active" onclick="selectTablet('P100001')" id="item-P100001">
+                <div class="item-id">P100001 <span class="badge badge-date">SS01</span></div>
+                <div class="item-meta">AAS 001 • 10 lines</div>
+            </li>
+            
+            <li class="tablet-item " onclick="selectTablet('P100002')" id="item-P100002">
+                <div class="item-id">P100002 <span class="badge badge-date">AS02</span></div>
+                <div class="item-meta">AAS 002 • 7 lines</div>
+            </li>
+            
+            <li class="tablet-item " onclick="selectTablet('P100003')" id="item-P100003">
+                <div class="item-id">P100003 <span class="badge badge-date">SS07</span></div>
+                <div class="item-meta">AAS 003 • 5 lines</div>
+            </li>
+            
+            <li class="tablet-item " onclick="selectTablet('P100004')" id="item-P100004">
+                <div class="item-id">P100004 <span class="badge badge-date">AS01..AS08</span></div>
+                <div class="item-meta">AAS 004 • 6 lines</div>
+            </li>
+            
+            <li class="tablet-item " onclick="selectTablet('P100005')" id="item-P100005">
+                <div class="item-id">P100005 <span class="badge badge-date">AS04</span></div>
+                <div class="item-meta">AAS 005 • 5 lines</div>
+            </li>
+            
+            <li class="tablet-item " onclick="selectTablet('P100006')" id="item-P100006">
+                <div class="item-id">P100006 <span class="badge badge-date">AS08</span></div>
+                <div class="item-meta">AAS 006 • 7 lines</div>
+            </li>
+            
+            <li class="tablet-item " onclick="selectTablet('P100007')" id="item-P100007">
+                <div class="item-id">P100007 <span class="badge badge-date">SS01</span></div>
+                <div class="item-meta">AAS 007 • 7 lines</div>
+            </li>
+            
+        </ul>
+    </div>
+
+    <div id="workspace">
+        
+        <div class="tablet-view" id="view-P100001" style="">
+            <div class="workspace-header">
+                <div class="header-title">
+                    <h2>P100001 — AAS 001</h2>
+                    <p>Ur III (ca. 2100-2000 BC) • Unassigned</p>
+                </div>
+                <div>
+                    <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/artifacts/P100001" target="_blank">🌐 Open on CDLI Database ↗</a>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Column 1: Transliteration -->
+                <div class="panel">
+                    <h3>📝 ATF Transliteration</h3>
+                    
+                    <div class="surface-title">@obverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text"><span class="tok-num">1(disz)</span> <span class="tok-comm">udu</span> niga</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text"><span class="tok-num">1(disz)</span> <span class="tok-comm">u8</span></span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">3.</span>
+                        <span class="line-text">ba-usz2 u4 <span class="tok-num">2(u)</span> <span class="tok-num">8(disz)-kam</span></span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">4.</span>
+                        <span class="line-text">ki ur-ru-ta</span>
+                    </div>
+                    
+                    
+                    <div class="surface-title">@reverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text"><span class="tok-official">kiszib3</span> lu2-kal-la</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text">iti ezem-{d}szul-gi</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">3.</span>
+                        <span class="line-text">mu {d}szu-{d}suen lugal</span>
+                    </div>
+                    
+                    
+                    <div class="surface-title">@seal 1</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text">lu2-kal-la</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text">dub-sar</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">3.</span>
+                        <span class="line-text">dumu ur-e11-e szusz3</span>
+                    </div>
+                    
+                    
+                </div>
+
+                <!-- Column 2: Analytics, Dates & Image -->
+                <div>
+                    <div class="panel" style="margin-bottom: 24px;">
+                        <h3>🏛️ Chronos & Verification</h3>
+                        <div class="status-box box-chronos">
+                            <strong>Macro-Chronology:</strong> CERTIFIED_DATED<br>
+                            <strong>Resolved Date:</strong> SS01 (Confidence: 100%)
+                        </div>
+                        
+                        <div class="status-box box-clean">
+                            ✅ <strong>Linter Status:</strong> 100% Valid C-ATF (Clean parity, valid tokens)
+                        </div>
+                        
+
+                        <ul class="meta-list">
+                            <li><span>Attested Officials:</span> <span class="val">lu2-kal-la, ur-ru-ta</span></li>
+                            <li><span>Commodity Transactions:</span> <span class="val">2</span></li>
+                            <li><span>Candidate Joins:</span> <span class="val">1 match(es)</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="panel photo-container">
+                        <h3>📷 Tablet Artifact Archive</h3>
+                        <img src="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100001.jpg" alt="Tablet photo P100001" onerror="this.onerror=null; this.src='https://placehold.co/400x250/1e293b/38bdf8?text=Image+Archive+CDLI+P100001';">
+                        <div>
+                            <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100001.jpg" target="_blank">🔍 View Full Resolution Scan ↗</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tablet-view" id="view-P100002" style="display:none;">
+            <div class="workspace-header">
+                <div class="header-title">
+                    <h2>P100002 — AAS 002</h2>
+                    <p>Ur III (ca. 2100-2000 BC) • Unassigned</p>
+                </div>
+                <div>
+                    <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/artifacts/P100002" target="_blank">🌐 Open on CDLI Database ↗</a>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Column 1: Transliteration -->
+                <div class="panel">
+                    <h3>📝 ATF Transliteration</h3>
+                    
+                    <div class="surface-title">@obverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text"><span class="tok-num">3(disz)</span> <span class="tok-comm">udu</span></span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text"><span class="tok-num">2(disz)</span> <span class="tok-comm">masz2</span></span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">3.</span>
+                        <span class="line-text">ki ab-ba-sa6-ga-ta</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">4.</span>
+                        <span class="line-text">na-lu5 <span class="tok-official">i3-dab5</span></span>
+                    </div>
+                    
+                    
+                    <div class="surface-title">@reverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text">iti ezem-an-na</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text">mu {d}amar-{d}suen lugal-e ur-bi2-lum{ki} mu-hul</span>
+                    </div>
+                    
+                    
+                    <div class="surface-title">@left</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text"><span class="tok-num">5(disz)</span></span>
+                    </div>
+                    
+                    
+                </div>
+
+                <!-- Column 2: Analytics, Dates & Image -->
+                <div>
+                    <div class="panel" style="margin-bottom: 24px;">
+                        <h3>🏛️ Chronos & Verification</h3>
+                        <div class="status-box box-chronos">
+                            <strong>Macro-Chronology:</strong> CERTIFIED_DATED<br>
+                            <strong>Resolved Date:</strong> AS02 (Confidence: 100%)
+                        </div>
+                        
+                        <div class="status-box box-clean">
+                            ✅ <strong>Linter Status:</strong> 100% Valid C-ATF (Clean parity, valid tokens)
+                        </div>
+                        
+
+                        <ul class="meta-list">
+                            <li><span>Attested Officials:</span> <span class="val">ab-ba-sa6-ga-ta, na-lu5</span></li>
+                            <li><span>Commodity Transactions:</span> <span class="val">3</span></li>
+                            <li><span>Candidate Joins:</span> <span class="val">0 match(es)</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="panel photo-container">
+                        <h3>📷 Tablet Artifact Archive</h3>
+                        <img src="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100002.jpg" alt="Tablet photo P100002" onerror="this.onerror=null; this.src='https://placehold.co/400x250/1e293b/38bdf8?text=Image+Archive+CDLI+P100002';">
+                        <div>
+                            <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100002.jpg" target="_blank">🔍 View Full Resolution Scan ↗</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tablet-view" id="view-P100003" style="display:none;">
+            <div class="workspace-header">
+                <div class="header-title">
+                    <h2>P100003 — AAS 003</h2>
+                    <p>Ur III (ca. 2100-2000 BC) • Unassigned</p>
+                </div>
+                <div>
+                    <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/artifacts/P100003" target="_blank">🌐 Open on CDLI Database ↗</a>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Column 1: Transliteration -->
+                <div class="panel">
+                    <h3>📝 ATF Transliteration</h3>
+                    
+                    <div class="surface-title">@obverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text"><span class="tok-num">2(disz)</span> <span class="tok-comm">sila4</span></span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text">ki in-ta-e3-a-ta</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">3.</span>
+                        <span class="line-text">ur-mes <span class="tok-official">i3-dab5</span></span>
+                    </div>
+                    
+                    
+                    <div class="surface-title">@reverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text">iti ezem-mah</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text">mu {d}szu-{d}suen lugal uri5{ki}-ma-ke4 ma-da za-ab-sza-li{ki} mu-hul</span>
+                    </div>
+                    
+                    
+                </div>
+
+                <!-- Column 2: Analytics, Dates & Image -->
+                <div>
+                    <div class="panel" style="margin-bottom: 24px;">
+                        <h3>🏛️ Chronos & Verification</h3>
+                        <div class="status-box box-chronos">
+                            <strong>Macro-Chronology:</strong> CERTIFIED_DATED<br>
+                            <strong>Resolved Date:</strong> SS07 (Confidence: 100%)
+                        </div>
+                        
+                        <div class="status-box box-clean">
+                            ✅ <strong>Linter Status:</strong> 100% Valid C-ATF (Clean parity, valid tokens)
+                        </div>
+                        
+
+                        <ul class="meta-list">
+                            <li><span>Attested Officials:</span> <span class="val">in-ta-e3-a-ta, ur-mes</span></li>
+                            <li><span>Commodity Transactions:</span> <span class="val">1</span></li>
+                            <li><span>Candidate Joins:</span> <span class="val">0 match(es)</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="panel photo-container">
+                        <h3>📷 Tablet Artifact Archive</h3>
+                        <img src="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100003.jpg" alt="Tablet photo P100003" onerror="this.onerror=null; this.src='https://placehold.co/400x250/1e293b/38bdf8?text=Image+Archive+CDLI+P100003';">
+                        <div>
+                            <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100003.jpg" target="_blank">🔍 View Full Resolution Scan ↗</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tablet-view" id="view-P100004" style="display:none;">
+            <div class="workspace-header">
+                <div class="header-title">
+                    <h2>P100004 — AAS 004</h2>
+                    <p>Ur III (ca. 2100-2000 BC) • Unassigned</p>
+                </div>
+                <div>
+                    <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/artifacts/P100004" target="_blank">🌐 Open on CDLI Database ↗</a>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Column 1: Transliteration -->
+                <div class="panel">
+                    <h3>📝 ATF Transliteration</h3>
+                    
+                    <div class="surface-title">@obverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text"><span class="tok-num">1(disz)</span> <span class="tok-comm">gu4</span></span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text"><span class="tok-num">5(disz)</span> <span class="tok-comm">udu</span> niga</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">3.</span>
+                        <span class="line-text">ki ab-ba-sa6-ga-ta</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">4.</span>
+                        <span class="line-text">ur-szu-ga-lam-ma <span class="tok-official">i3-dab5</span></span>
+                    </div>
+                    
+                    
+                    <div class="surface-title">@reverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text">iti sze-sag11-ku5</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text">mu <span class="tok-broken">[</span> ... <span class="tok-broken">]</span></span>
+                    </div>
+                    
+                    
+                </div>
+
+                <!-- Column 2: Analytics, Dates & Image -->
+                <div>
+                    <div class="panel" style="margin-bottom: 24px;">
+                        <h3>🏛️ Chronos & Verification</h3>
+                        <div class="status-box box-chronos">
+                            <strong>Macro-Chronology:</strong> ESTIMATED<br>
+                            <strong>Resolved Date:</strong> AS01..AS08 (Confidence: 50%)
+                        </div>
+                        
+                        <div class="status-box box-clean">
+                            ✅ <strong>Linter Status:</strong> 100% Valid C-ATF (Clean parity, valid tokens)
+                        </div>
+                        
+
+                        <ul class="meta-list">
+                            <li><span>Attested Officials:</span> <span class="val">ab-ba-sa6-ga-ta, ur-szu-ga-lam-ma</span></li>
+                            <li><span>Commodity Transactions:</span> <span class="val">2</span></li>
+                            <li><span>Candidate Joins:</span> <span class="val">0 match(es)</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="panel photo-container">
+                        <h3>📷 Tablet Artifact Archive</h3>
+                        <img src="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100004.jpg" alt="Tablet photo P100004" onerror="this.onerror=null; this.src='https://placehold.co/400x250/1e293b/38bdf8?text=Image+Archive+CDLI+P100004';">
+                        <div>
+                            <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100004.jpg" target="_blank">🔍 View Full Resolution Scan ↗</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tablet-view" id="view-P100005" style="display:none;">
+            <div class="workspace-header">
+                <div class="header-title">
+                    <h2>P100005 — AAS 005</h2>
+                    <p>Ur III (ca. 2100-2000 BC) • Unassigned</p>
+                </div>
+                <div>
+                    <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/artifacts/P100005" target="_blank">🌐 Open on CDLI Database ↗</a>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Column 1: Transliteration -->
+                <div class="panel">
+                    <h3>📝 ATF Transliteration</h3>
+                    
+                    <div class="surface-title">@obverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text"><span class="tok-num">2(disz)</span> <span class="tok-comm">udu</span> <span class="tok-broken">[</span> ... <span class="tok-broken">]</span></span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text">ki <span class="tok-broken">[</span> ... <span class="tok-broken">]</span> -ta</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">3.</span>
+                        <span class="line-text">in-ta-e3-a <span class="tok-official">i3-dab5</span></span>
+                    </div>
+                    
+                    
+                    <div class="surface-title">@reverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text">iti ezem-me-ki-gal2</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text">mu en-mah-gal-an-na en {d}nanna ba-hun</span>
+                    </div>
+                    
+                    
+                </div>
+
+                <!-- Column 2: Analytics, Dates & Image -->
+                <div>
+                    <div class="panel" style="margin-bottom: 24px;">
+                        <h3>🏛️ Chronos & Verification</h3>
+                        <div class="status-box box-chronos">
+                            <strong>Macro-Chronology:</strong> CERTIFIED_DATED<br>
+                            <strong>Resolved Date:</strong> AS04 (Confidence: 100%)
+                        </div>
+                        
+                        <div class="status-box box-clean">
+                            ✅ <strong>Linter Status:</strong> 100% Valid C-ATF (Clean parity, valid tokens)
+                        </div>
+                        
+
+                        <ul class="meta-list">
+                            <li><span>Attested Officials:</span> <span class="val">-ta, ..., in-ta-e3-a</span></li>
+                            <li><span>Commodity Transactions:</span> <span class="val">1</span></li>
+                            <li><span>Candidate Joins:</span> <span class="val">0 match(es)</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="panel photo-container">
+                        <h3>📷 Tablet Artifact Archive</h3>
+                        <img src="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100005.jpg" alt="Tablet photo P100005" onerror="this.onerror=null; this.src='https://placehold.co/400x250/1e293b/38bdf8?text=Image+Archive+CDLI+P100005';">
+                        <div>
+                            <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100005.jpg" target="_blank">🔍 View Full Resolution Scan ↗</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tablet-view" id="view-P100006" style="display:none;">
+            <div class="workspace-header">
+                <div class="header-title">
+                    <h2>P100006 — AAS 006</h2>
+                    <p>Ur III (ca. 2100-2000 BC) • Unassigned</p>
+                </div>
+                <div>
+                    <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/artifacts/P100006" target="_blank">🌐 Open on CDLI Database ↗</a>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Column 1: Transliteration -->
+                <div class="panel">
+                    <h3>📝 ATF Transliteration</h3>
+                    
+                    <div class="surface-title">@obverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text"><span class="tok-num">4(disz)</span> <span class="tok-comm">udu</span> niga</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text"><span class="tok-num">1(disz)</span> <span class="tok-comm">sila4</span></span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">3.</span>
+                        <span class="line-text">{d}en-lil2 {d}nin-lil2</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">4.</span>
+                        <span class="line-text">ba-zi</span>
+                    </div>
+                    
+                    
+                    <div class="surface-title">@reverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text">ki ab-ba-sa6-ga-ta</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text">iti <span class="tok-official">ki-siki-{d}nin-a-zu</span></span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">3.</span>
+                        <span class="line-text">mu en {d}nanna kar-zi-da ba-hun</span>
+                    </div>
+                    
+                    
+                </div>
+
+                <!-- Column 2: Analytics, Dates & Image -->
+                <div>
+                    <div class="panel" style="margin-bottom: 24px;">
+                        <h3>🏛️ Chronos & Verification</h3>
+                        <div class="status-box box-chronos">
+                            <strong>Macro-Chronology:</strong> CERTIFIED_DATED<br>
+                            <strong>Resolved Date:</strong> AS08 (Confidence: 100%)
+                        </div>
+                        
+                        <div class="status-box box-clean">
+                            ✅ <strong>Linter Status:</strong> 100% Valid C-ATF (Clean parity, valid tokens)
+                        </div>
+                        
+
+                        <ul class="meta-list">
+                            <li><span>Attested Officials:</span> <span class="val">ab-ba-sa6-ga-ta</span></li>
+                            <li><span>Commodity Transactions:</span> <span class="val">2</span></li>
+                            <li><span>Candidate Joins:</span> <span class="val">0 match(es)</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="panel photo-container">
+                        <h3>📷 Tablet Artifact Archive</h3>
+                        <img src="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100006.jpg" alt="Tablet photo P100006" onerror="this.onerror=null; this.src='https://placehold.co/400x250/1e293b/38bdf8?text=Image+Archive+CDLI+P100006';">
+                        <div>
+                            <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100006.jpg" target="_blank">🔍 View Full Resolution Scan ↗</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tablet-view" id="view-P100007" style="display:none;">
+            <div class="workspace-header">
+                <div class="header-title">
+                    <h2>P100007 — AAS 007</h2>
+                    <p>Ur III (ca. 2100-2000 BC) • Unassigned</p>
+                </div>
+                <div>
+                    <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/artifacts/P100007" target="_blank">🌐 Open on CDLI Database ↗</a>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Column 1: Transliteration -->
+                <div class="panel">
+                    <h3>📝 ATF Transliteration</h3>
+                    
+                    <div class="surface-title">@obverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text"><span class="tok-broken">[</span> ... <span class="tok-broken">]</span> <span class="tok-num">1(disz)</span> <span class="tok-comm">udu</span> niga</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text"><span class="tok-num">1(disz)</span> <span class="tok-broken">u8#</span></span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">3.</span>
+                        <span class="line-text">ba-usz2 u4 <span class="tok-num">2(u)</span> <span class="tok-num">8(disz)-kam</span></span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">4.</span>
+                        <span class="line-text">ki ur-ru-ta</span>
+                    </div>
+                    
+                    
+                    <div class="surface-title">@reverse</div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">1.</span>
+                        <span class="line-text"><span class="tok-official">kiszib3</span> lu2-kal-la</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">2.</span>
+                        <span class="line-text">iti ezem-{d}szul-gi</span>
+                    </div>
+                    
+                    <div class="line-row">
+                        <span class="line-no">3.</span>
+                        <span class="line-text">mu <span class="tok-broken">[</span> ... <span class="tok-broken">]</span></span>
+                    </div>
+                    
+                    
+                </div>
+
+                <!-- Column 2: Analytics, Dates & Image -->
+                <div>
+                    <div class="panel" style="margin-bottom: 24px;">
+                        <h3>🏛️ Chronos & Verification</h3>
+                        <div class="status-box box-chronos">
+                            <strong>Macro-Chronology:</strong> ESTIMATED<br>
+                            <strong>Resolved Date:</strong> SS01 (Confidence: 95%)
+                        </div>
+                        
+                        <div class="status-box box-clean">
+                            ✅ <strong>Linter Status:</strong> 100% Valid C-ATF (Clean parity, valid tokens)
+                        </div>
+                        
+
+                        <ul class="meta-list">
+                            <li><span>Attested Officials:</span> <span class="val">lu2-kal-la, ur-ru-ta</span></li>
+                            <li><span>Commodity Transactions:</span> <span class="val">1</span></li>
+                            <li><span>Candidate Joins:</span> <span class="val">1 match(es)</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="panel photo-container">
+                        <h3>📷 Tablet Artifact Archive</h3>
+                        <img src="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100007.jpg" alt="Tablet photo P100007" onerror="this.onerror=null; this.src='https://placehold.co/400x250/1e293b/38bdf8?text=Image+Archive+CDLI+P100007';">
+                        <div>
+                            <a class="cdli-link" href="https://cdli.mpiwg-berlin.mpg.de/dl/photo/P100007.jpg" target="_blank">🔍 View Full Resolution Scan ↗</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        function selectTablet(id) {
+            document.querySelectorAll('.tablet-view').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tablet-item').forEach(el => el.classList.remove('active'));
+            const view = document.getElementById('view-' + id);
+            const item = document.getElementById('item-' + id);
+            if (view) view.style.display = 'block';
+            if (item) item.classList.add('active');
+        }
+
+        function filterTablets() {
+            const query = document.getElementById('filterInput').value.toLowerCase();
+            document.querySelectorAll('.tablet-item').forEach(item => {
+                const text = item.innerText.toLowerCase();
+                item.style.display = text.includes(query) ? 'block' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>
