@@ -35,7 +35,7 @@ class ATFLexer:
     RE_TEXT_ID = re.compile(r"^&([P-Z0-9]+)\s*=\s*(.*)$")
     RE_SURFACE = re.compile(r"^@(obverse|reverse|left|right|top|bottom|edge)(.*)$", re.IGNORECASE)
     RE_OBJECT = re.compile(r"^@(tablet|envelope|bulla|object|seal\s+\d+|face\s+\w+)(.*)$", re.IGNORECASE)
-    RE_LINE = re.compile(r"^([0-9]+'?[a-z]?)\.\s*(.*)$")
+    RE_LINE = re.compile(r"^([0-9]+'*[a-z]?)\.\s*(.*)$")
     RE_STRUCTURE = re.compile(r"^\$\s*(.*)$")
     RE_LANG = re.compile(r"^#atf:\s*(.*)$")
 

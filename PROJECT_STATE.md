@@ -15,47 +15,54 @@
 | **1. Ur III Economic Ledger** | `src/ledger/` | `LedgerAuditor` | Sexagesimal metrology parsing, double-entry receipts (`ki...-ta` / `i3-dab5` / `ba-zi`), net inventory balance sheets (24,018 real txs audited). |
 | **2. Orphan Tablet Resolver** | `src/authors/` + `src/chronos/` | `AuthorIdentifier` & `ChronosSolver` | Seal legend extraction (`@seal`), colophons (`dub-sar`), Bayesian constraint propagation across career windows (1,009 undated tablets dated). |
 | **3. Fragment Joiner** | `src/joins/` | `FragmentMatcher` | Token and character $k$-mer Jaccard alignment detecting physical and virtual joins across museum collections. |
-| **4. K-mer Parquet Engine** | `src/compiler/` | `ATFParser` & `StorageEngine` | Streaming lexer and AST parser serializing into `tablets.parquet`, `lines.parquet`, `signs.parquet`, `kmers.parquet` mounted inside `nisaba.duckdb`. |
-| **5. Tablet Visual Explorer** | `src/browser/` | `TabletBrowserRenderer` | Interactive standalone dark-mode HTML app (`browser.html`) with local cached high-res CDLI photos, color-coded syntax & deep-linking URL hashes. |
+| **4. K-mer Parquet Engine & Batch Compiler** | `src/compiler/` | `BatchCompiler` & `StorageEngine` | Streaming lexer and AST parser serializing into `tablets.parquet`, `lines.parquet`, `signs.parquet`, `kmers.parquet` in constant memory with DuckDB views. |
+| **5. Tablet & Network Explorers** | `src/browser/` | `TabletBrowserRenderer` & `NetworkGraphRenderer` | Interactive HTML apps: `browser.html` (tablet photos & syntax) + `prosopography_graph.html` (Cytoscape.js administrative networks). |
+| **6. Epigraphic REST API** | `src/api/` | `FastAPI app` & `NisabaDataService` | Microservice with OpenAPI/Swagger docs (`/docs`), DuckDB queries, full-text search, ledger endpoints, and graph serialization. |
 
 ---
 
 ## 🧪 3. Test Suite Verification
 
 * **Framework:** `pytest`
-* **Test Count:** **30 passing tests** across 12 test suites:
+* **Test Count:** **68 passing tests** across 16 test suites:
+  - `tests/test_api.py` (7 tests: root, health, stats, tablets pagination, detail, search, ledger, D3/Cytoscape graph)
   - `tests/test_authors.py` (3 tests: seal extraction, probabilistic attribution, corpus batch)
+  - `tests/test_batch_compiler.py` (1 test: chunked streaming compilation in constant memory and DuckDB mounting)
   - `tests/test_browser.py` (1 test: HTML structure, CDLI photo links, entity highlight spans, hash routing)
   - `tests/test_chronos.py` (2 tests: formula normalization, undated tablet resolution)
   - `tests/test_deep_chronos.py` (2 tests: royal year coverage, disjoint window handling)
   - `tests/test_deep_ledger.py` (2 tests: sexagesimal conversions, multi-commodity balance sheets)
   - `tests/test_deep_linter.py` (3 tests: unmatched angle brackets, unmatched parentheses, multiple sign issues)
   - `tests/test_duckdb_analytics.py` (1 test: multi-table SQL joins, sign type aggregations)
+  - `tests/test_extended_coverage.py` (26 tests: AST parsing, primed lines, multi-commodity flows, k-mer metrics, Bayesian chronos, file sharding roundtrips)
   - `tests/test_joins.py` (2 tests: k-mer Jaccard, fragment join matching)
   - `tests/test_ledger.py` (1 test: transaction extraction and balances)
   - `tests/test_lexer.py` (2 tests: streaming tokens, broken line numbering)
   - `tests/test_linter.py` (3 tests: bracket auditor, sign validator, corpus reporting)
   - `tests/test_parser.py` (2 tests: AST generation, damaged sign preservation)
   - `tests/test_pipeline.py` (2 tests: full pipeline integration and selective tool runs)
+  - `tests/test_prosopographic_network.py` (2 tests: graph construction, centrality, D3/Cytoscape exports, HTML generation)
   - `tests/test_storage.py` (1 test: Parquet export and DuckDB query execution)
+  - `tests/test_chunker.py` (2 tests: file sharding, manifest generation, SHA-256 byte-exact reassembly)
   - `tests/test_taxonomy.py` (3 tests: king codes, catalog uniqueness, metrology)
-* **Status:** 100% Green (`30 passed in 4.97s`).
+* **Status:** 100% Green (`68 passed in 63.91s`).
 
 ---
 
 ## 📊 4. Measured Empirical Benchmarks on Real Archival Corpus
 
-Measured directly on 5,000 authentic Ur III tablets (`P100001` - `P105000`) from the official CDLI dump (`cdliatf_unblocked.atf`):
+### 🌐 FULL CORPUS COMPILATION (100% World CDLI Archive)
+Compiled directly from `data/raw/cdliatf_unblocked.atf` (86.9 MB):
 
-| Pipeline Stage | Processed Volume | Real Execution Time | Real Throughput |
-| :--- | :---: | :---: | :---: |
-| **Streaming Lexer & AST Parser** | **5,000 tablets** (78,897 lines, 241,858 signs) | **6.36 s** | **786 tablets/s** (12,401 lines/s) |
-| **Columnar Parquet Export** | 4 tables (`tablets`, `lines`, `signs`, `kmers`) | **12.64 s** | Streamed zero-loss serialization |
-| **DuckDB Ingestion & Indexing** | Mounted `nisaba.duckdb` | **Instant** | Parquet-backed views |
-| **DuckDB Analytical SQL Queries** | Sign and line aggregations | **1.84 - 2.84 ms** | Sub-3ms query latencies |
-| **Scribe & Author Attribution** | 5,000 tablets evaluated | **0.82 s** | **2,048 scribes identified** (41.0%) |
-| **Chronos Macro-Chronology** | 5,000 tablets dated | **1.23 s** | **2,515 certified + 1,009 inferred** |
-| **Ur III Economic Ledger** | 5,000 tablets audited | **2.32 s** | **24,018 transactions, 9,577 accounts** |
+* **Total Tablets Ingested:** **135,253 tablets**
+* **Total Lines Extracted:** **2,190,263 lines**
+* **Total Signs Classified:** **6,931,353 signs**
+* **Total 4-mers Indexed:** **35,081,773 k-mers**
+* **Total Compilation Time:** **292.11 s (4.8 minutes)**
+* **Throughput:** **463 tablets/s (7,498 lines/s)**
+* **Compiled Database:** `data/processed/nisaba.duckdb` (589,049,856 bytes)
+* **Git-Safe Distribution:** Sharded into **15 parts** (< 42 MB each) in `data/shards/` with SHA-256 manifest.
+* **On-the-Fly Reassembly:** Auto-bootstrapped on client launch in ~3.2 seconds.
 
 ---
 

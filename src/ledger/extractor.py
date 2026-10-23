@@ -37,7 +37,10 @@ class LedgerExtractor:
         self.proso = ProsopographyExtractor()
 
     def _parse_quantity(self, token: str) -> float:
-        """Parses cuneiform numerical token to decimal value."""
+        """Parses cuneiform numerical token to decimal value, supporting fractions and sexagesimal units."""
+        m_frac = re.match(r"^(\d+)/(\d+)\(([a-z0-9\']+)\)", token)
+        if m_frac:
+            return float(m_frac.group(1)) / float(m_frac.group(2))
         m = re.match(r"^(\d+)\(([a-z0-9\']+)\)", token)
         if not m:
             return 1.0
@@ -86,7 +89,7 @@ class LedgerExtractor:
                 continue
 
             # Look for number at start of line
-            if re.match(r"^\d+\([a-z0-9\']+\)", tokens[0]):
+            if re.match(r"^\d+(?:/\d+)?\([a-z0-9\']+\)", tokens[0]):
                 qty = self._parse_quantity(tokens[0])
                 # Remainder of line up to transaction verbs is the commodity
                 commodity_tokens = []

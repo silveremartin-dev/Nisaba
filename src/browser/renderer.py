@@ -4,6 +4,7 @@ Generates a standalone, rich HTML explorer displaying tablet imagery, transliter
 color-coded linguistic entities, linter diagnostics, Chronos dates, and virtual join matches.
 """
 
+import html
 import json
 import os
 import re
@@ -226,14 +227,15 @@ class TabletBrowserRenderer:
         """Adds HTML span highlighting to transliteration tokens."""
         tokens = text.split()
         res = []
-        for tok in tokens:
-            if re.match(r"^\d+\([a-z0-9\']+\)", tok):
+        for raw_tok in tokens:
+            tok = html.escape(raw_tok)
+            if re.match(r"^\d+\([a-z0-9\']+\)", raw_tok):
                 res.append(f'<span class="tok-num">{tok}</span>')
-            elif tok in ("udu", "masz2", "sila4", "u8", "gu4", "ab2", "sze", "dabin"):
+            elif raw_tok in ("udu", "masz2", "sila4", "u8", "gu4", "ab2", "sze", "dabin"):
                 res.append(f'<span class="tok-comm">{tok}</span>')
-            elif "[" in tok or "]" in tok or "#" in tok or "x" in tok:
+            elif "[" in raw_tok or "]" in raw_tok or "#" in raw_tok or "x" in raw_tok:
                 res.append(f'<span class="tok-broken">{tok}</span>')
-            elif tok.startswith("ki-") or "i3-dab5" in tok or "kiszib3" in tok:
+            elif raw_tok.startswith("ki-") or "i3-dab5" in raw_tok or "kiszib3" in raw_tok:
                 res.append(f'<span class="tok-official">{tok}</span>')
             else:
                 res.append(tok)

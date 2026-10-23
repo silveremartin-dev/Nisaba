@@ -3,7 +3,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![DuckDB](https://img.shields.io/badge/duckdb-1.1+-yellow.svg)](https://duckdb.org/)
 [![Apache Arrow / Parquet](https://img.shields.io/badge/parquet-columnar-green.svg)](https://arrow.apache.org/)
-[![Tests: 30 Passing](https://img.shields.io/badge/tests-30%20passed-brightgreen.svg)](tests/)
+[![Tests: 68 Passing](https://img.shields.io/badge/tests-68%20passed-brightgreen.svg)](tests/)
 [![Corpus: 135,254 Tablets](https://img.shields.io/badge/CDLI%20Corpus-135%2C254%20texts-orange.svg)](data/raw/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
@@ -270,8 +270,9 @@ Sumerian / Nisaba/
 │       ├── P131610.jpg        # Real Louvre join (AO 5521+5522)
 │       └── P285811.jpg        # Real Geneva Atrahasis join fragment
 │
-├── doc/
+├── docs/
 │   ├── ARCHITECTURE.md        # Technical specifications & mathematical models
+│   ├── CORPUS_TAXONOMY.md     # Sumerian periods, proveniences, king names & metrology
 │   └── TOOLS_GUIDE.md         # Detailed guide for each of the 5 tools
 │
 ├── data/

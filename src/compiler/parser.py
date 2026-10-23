@@ -181,6 +181,12 @@ class ATFParser:
         if current_tablet:
             yield current_tablet
 
+    def parse_string(self, text: str) -> List[TabletRecord]:
+        """Convenience method to parse an in-memory ATF string."""
+        lexer = ATFLexer()
+        tokens = lexer.tokenize_stream((line + "\n" for line in text.splitlines()))
+        return list(self.parse_stream(tokens))
+
     def parse_file(self, filepath: str) -> List[TabletRecord]:
         """Convenience method to parse an entire ATF file from disk."""
         lexer = ATFLexer()

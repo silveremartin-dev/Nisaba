@@ -44,15 +44,16 @@ data/raw/*.json
 data/processed/*.parquet
 data/processed/*.duckdb
 data/processed/*.arrow
+data/processed/*.html
 data/processed/reports/
 data/processed/benchmark/
+*.tmp_reassemble
+!data/shards/*.manifest.json
+!data/shards/*.part*
 
 # Scratch & Logs
+scratch/
 assets/real_screenshots/
-scratch/*.tmp
-scratch/*.log
-scratch/*.png
-scratch/*.jpg
 *.log
 
 # IDE & OS

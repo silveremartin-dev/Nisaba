@@ -1,0 +1,99 @@
+{
+  "target_filename": "nisaba.duckdb",
+  "total_size_bytes": 589049856,
+  "expected_sha256": "b119201e452c1dcc1745c8c60e5632b691b61bf2ea75295005223a367e3160ef",
+  "chunk_size_bytes": 41943040,
+  "total_parts": 15,
+  "parts": [
+    {
+      "part_index": 1,
+      "filename": "nisaba.duckdb.part001",
+      "size_bytes": 41943040,
+      "sha256": "26d7d8b67b3cd4750252e8af3dfc75fe538c7024c2029229f17fe8d7e6eba9d9"
+    },
+    {
+      "part_index": 2,
+      "filename": "nisaba.duckdb.part002",
+      "size_bytes": 41943040,
+      "sha256": "020433b40ad1c7bbea4c0f82bb85c96166cabe1eb25e37a8cb5e0e4614c0a1b2"
+    },
+    {
+      "part_index": 3,
+      "filename": "nisaba.duckdb.part003",
+      "size_bytes": 41943040,
+      "sha256": "6629f726ffbe757efd5195e2c50cb7f14f45e201ed240df1393d349e12edf9c1"
+    },
+    {
+      "part_index": 4,
+      "filename": "nisaba.duckdb.part004",
+      "size_bytes": 41943040,
+      "sha256": "32f48e3744d039e4f641d1635a877a6c6a97bfebd62b865b6ad79d9a4183b3fc"
+    },
+    {
+      "part_index": 5,
+      "filename": "nisaba.duckdb.part005",
+      "size_bytes": 41943040,
+      "sha256": "e15bee00363d8221e1ba29f95092d0ef35265ec4f01155fdabef69adbcc84bc7"
+    },
+    {
+      "part_index": 6,
+      "filename": "nisaba.duckdb.part006",
+      "size_bytes": 41943040,
+      "sha256": "6e707c1f450f2c97a410f6770c759c32331c3c24f52a24a7b20bf1d696c1f5ee"
+    },
+    {
+      "part_index": 7,
+      "filename": "nisaba.duckdb.part007",
+      "size_bytes": 41943040,
+      "sha256": "82c62b5a18d35dcc49c2aa27269dbac385e23dfb7f72d6d6b52f2afe537de52d"
+    },
+    {
+      "part_index": 8,
+      "filename": "nisaba.duckdb.part008",
+      "size_bytes": 41943040,
+      "sha256": "edb7dab23d57001023bbadd0c51d18ac5f07882d1f5524ca1e8e495573f74080"
+    },
+    {
+      "part_index": 9,
+      "filename": "nisaba.duckdb.part009",
+      "size_bytes": 41943040,
+      "sha256": "7f46349e845ca8fabbb760df4bcf3ef86ff202477bef933c11f81903489a1b47"
+    },
+    {
+      "part_index": 10,
+      "filename": "nisaba.duckdb.part010",
+      "size_bytes": 41943040,
+      "sha256": "2a7297f35d4b10645877873e150668f7af17aa8833ce0eb079c62be7e50c85be"
+    },
+    {
+      "part_index": 11,
+      "filename": "nisaba.duckdb.part011",
+      "size_bytes": 41943040,
+      "sha256": "1b9035713c10e59f77bc906a0cf1bfd13b999564ee1aad3083fae136481138d0"
+    },
+    {
+      "part_index": 12,
+      "filename": "nisaba.duckdb.part012",
+      "size_bytes": 41943040,
+      "sha256": "72db01f3518658cca207514916365908c84909dae9a7e44a936e50d65034e146"
+    },
+    {
+      "part_index": 13,
+      "filename": "nisaba.duckdb.part013",
+      "size_bytes": 41943040,
+      "sha256": "05a46c140263c174f6658d2f9091c610470f6a3c412802fb910dd7aeb538120c"
+    },
+    {
+      "part_index": 14,
+      "filename": "nisaba.duckdb.part014",
+      "size_bytes": 41943040,
+      "sha256": "90e3daeec045f3a26fcb3bbcf97f11c36cb8f9f1ed79088d1a5d7f5f94236f37"
+    },
+    {
+      "part_index": 15,
+      "filename": "nisaba.duckdb.part015",
+      "size_bytes": 1847296,
+      "sha256": "a0093020995e1ae16971d442b5bf9a1053b01f7d8ed6cdf542d6d9bc7aa13228"
+    }
+  ]
+}

@@ -76,7 +76,7 @@ All AI agents and developers implementing features in Nisaba must adhere to the 
 
 ## 📄 4. Technical Documentation Standard
 
-* **Strict English Language Requirement**: ALL documentation (`README.md`, `doc/*.md`, `AGENTS.md`), code comments, docstrings, JSON schema definitions, and commit messages MUST be written strictly in English.
+* **Strict English Language Requirement**: ALL documentation (`README.md`, `docs/*.md`, `AGENTS.md`), code comments, docstrings, JSON schema definitions, and commit messages MUST be written strictly in English.
 * **Traceable Grounding**: All catalog entries must explicitly map to official CDLI P-numbers (e.g. `P100001` to `P520000`).
 * **Test-Driven Rigor**: Every module must have comprehensive pytest coverage verifying both synthetic edge cases and real-world CDLI tablet excerpts.
 

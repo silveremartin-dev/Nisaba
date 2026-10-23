@@ -113,7 +113,7 @@ def run_pipeline(
 
     # Tool 5: Tablet Visual Browser (Interactive HTML)
     if (tool in ("all", "browser")) and generate_browser:
-        print("\n[Tool 5/5: Tablet Visual Browser] Generating Interactive Viewer...")
+        print("\n[Tool 5/5: Tablet Visual Browser] Generating Interactive Viewer & Network Graph...")
         renderer = TabletBrowserRenderer()
         html_out = os.path.join(output_dir, "browser.html")
         renderer.render_corpus(
@@ -126,6 +126,15 @@ def run_pipeline(
             output_filepath=html_out,
         )
         print(f"      -> Browser generated: {html_out}")
+
+        from src.chronos.network import ProsopographicNetwork
+        from src.browser.network_renderer import NetworkGraphRenderer
+        net = ProsopographicNetwork()
+        net.build_network(tablets)
+        net_renderer = NetworkGraphRenderer()
+        graph_out = os.path.join(output_dir, "prosopography_graph.html")
+        net_renderer.render_network_html(net, output_filepath=graph_out)
+        print(f"      -> Prosopography Graph: {graph_out}")
 
     print("\n" + "=" * 70)
     print(f"[OK] NISABA EXECUTION FINISHED: Tool '{tool}' Complete")
