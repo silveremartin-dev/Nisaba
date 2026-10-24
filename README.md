@@ -253,8 +253,7 @@ py scripts/run_full_corpus.py
 ```
 Sumerian / Nisaba/
 ├── AGENTS.md                  # Developer & AI agent collaboration directives
-├── PROJECT_STATE.md           # Engineering session memory & asset registry
-├── README.md                  # Master technical documentation & real benchmarks
+├── README.md                  # Master technical documentation, benchmarks & asset registry
 ├── requirements.txt           # Python dependencies
 ├── .gitignore                 # Exclusion rules for large dumps & binaries
 │
@@ -307,9 +306,10 @@ Sumerian / Nisaba/
 │   ├── joins/                 # k-mer sequence alignment & virtual join matcher
 │   ├── ledger/                # Double-entry transaction extractor & balance auditor
 │   ├── browser/               # Standalone interactive HTML renderer
+│   ├── api/                   # FastAPI microservice & DuckDB data service with Swagger UI
 │   └── pipeline.py            # Central CLI entry point with --tool selector
 │
-└── tests/                     # 30 automated unit and integration tests
+└── tests/                     # 68 automated unit, property & integration tests (16 test suites)
 ```
 
 ---
