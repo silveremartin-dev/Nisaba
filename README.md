@@ -3,60 +3,50 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![DuckDB](https://img.shields.io/badge/duckdb-1.1+-yellow.svg)](https://duckdb.org/)
 [![Apache Arrow / Parquet](https://img.shields.io/badge/parquet-columnar-green.svg)](https://arrow.apache.org/)
-[![Tests: 72 Passing](https://img.shields.io/badge/tests-72%20passed-brightgreen.svg)](tests/)
-[![Corpus: 135,254 Tablets](https://img.shields.io/badge/CDLI%20Corpus-135%2C254%20texts-orange.svg)](data/raw/)
+[![Tests: 76 Passing](https://img.shields.io/badge/tests-76%20passed-brightgreen.svg)](tests/)
+[![Corpus: 135,253 Tablets](https://img.shields.io/badge/CDLI%20Corpus-135%2C253%20texts-orange.svg)](data/raw/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
-**Nisaba** is a high-throughput computational engine, streaming compiler, and data-engineering suite for ancient Sumerian cuneiform epigraphy. It transforms the world's **135,254 cuneiform tablets** from the Cuneiform Digital Library Initiative (CDLI bulk dump) into certified columnar relational databases (**DuckDB / Apache Parquet**), discovers cross-museum physical and virtual joins, resolves missing dates on broken tablets via prosopographic networks, identifies ancient scribes, and audits double-entry accounting ledgers.
+**Nisaba** is a high-throughput computational engine, streaming compiler, and data-engineering suite for ancient Sumerian cuneiform epigraphy. It transforms the world's **135,253 cuneiform tablets** from the Cuneiform Digital Library Initiative (CDLI bulk dump) into certified columnar relational databases (**DuckDB / Apache Parquet**), discovers cross-museum physical and virtual joins, resolves missing dates on broken tablets via prosopographic networks, identifies ancient scribes, and audits double-entry accounting ledgers.
 
 ---
 
-## 🏛️ Empirical Visual Showcase: Real Tablets, Real Joins, Real Results
+## 🏛️ Empirical Visual Showcase: Live Browser & Epigraphic Engines
 
 > [!NOTE]
-> All images, photographs, benchmarks, and query outputs below represent **genuine archival data** extracted from the CDLI database and photographed in international museum collections (Musée du Louvre, British Museum, Musée d'Art et d'Histoire in Geneva, Ashmolean Museum).
+> All screenshots below are **genuine, unedited browser captures** taken directly from the live Nisaba application running on the compiled 135,253-tablet CDLI corpus (`http://127.0.0.1:8000/explorer`).
 
-### 1. Ground-Truth Tablet Joins from International Museum Collections
-*Cross-collection sequence alignment and fracture-line matching discovering and certifying physical and virtual tablet joins.*
+### 1. Curated Tablet Showcase & Dossier View
+*High-resolution capture of Nisaba's visual explorer showing canonical joined tablet `P131610` (Louvre Museum AO 5521 + 5522), featuring genuine museum photography, line-by-line transliteration, Ur III accounting transactions, and epigraphic intelligence engines.*
 
-![Real Sumerian Tablet Joins](assets/images/real_tablet_joins_showcase.png)
-
-* **Left (Physical Join):** `CDLI P100089` (`AAS 102 + 205`) — Two fragments excavated separately bearing inventory marks `CF 11` (upper) and `CFC 149` (lower), joining cleanly across cuneiform text lines.
-* **Center (Museum Cross-Catalog Join):** `CDLI P131610` (`Louvre AO 5521 + 5522`) — Preserved in the Musée du Louvre, Paris (`TCL 02, 5521+`). A clear diagnostic fracture seam bisects both the obverse and reverse economic ledgers.
-* **Right (Long-Distance Virtual Join):** `CDLI P285811` (`Geneva MAH 16064`) — Preserved at the Musée d'Art et d'Histoire, Geneva. Virtual join candidate with British Museum fragment `BM 78942` (Tablet III of the Old Babylonian *Atrahasis Epic*), aligned across 1,000 km distance.
-
----
-
-### 2. Live Interactive Tablet Visual Explorer & Dossier
-*High-resolution browser capture of Nisaba's visual explorer (`/explorer`), displaying genuine CDLI tablets, high-resolution museum photograph archives, live syntax highlighting, Bayesian Chronos date resolution, scribe attribution, and ancient metrological conversions.*
-
-#### Comprehensive Tablet Dossier with Provenance, Period, and Real-Time Cross-Linking
 ![Nisaba Visual Tablet Explorer - Showcase Dossier](assets/images/01_tablet_explorer_showcase.png)
 
-* **Multi-Filter Corpus Navigation:** Quick filter chips allow instantaneous navigation across **⭐ Showcase**, **✍️ Scribes** (35,278 tablets), **⏳ Chronos Dates** (37,293 tablets), **📊 Ledger Accounts** (76,398 tablets), and **🧩 Virtual Joins** (22 candidates).
-* **Physical Tablet Photograph & Direct CDLI Grounding:** High-resolution multi-aspect photograph with direct one-click link to the official CDLI museum archive (`🔗 Source: CDLI (P100004) ↗`).
+* **Multi-Filter Corpus Navigation:** Quick filter chips allow instantaneous navigation across **⭐ Showcase** (curated joins, megasized ledgers, and royal bureaus), **✍️ Scribes** (35,000+ tablets with attributed scribes), **⏳ Chronos Dates** (37,000+ dated tablets), **📊 Ledger Accounts** (398,000 transactions), and **🧩 Virtual Joins**.
+* **Direct Museum Archive Grounding:** High-resolution museum photograph with direct link to the official CDLI museum archive (`🔗 Source: CDLI (P131610) ↗`).
 * **Epigraphic Intelligence Engines:**
-  * **Chronos Date Solver:** Recovers damaged year formulas (`mu [ ... ]`) by intersecting bureaucratic timelines to date the tablet to Amar-Sin year 1–8 (`AS01..AS08`).
-  * **Scribal Seal Attribution:** Identifies scribe `ur-szu-ga-lam-ma` (`dub-sar`, son of `ur-sa6-ga`, 75% confidence).
-  * **Transaction Extraction:** Formulaic transaction triplets detailing cattle transfers (`gu4`, `i3-dab5`).
+  * **Chronos Date Solver:** Dates damaged tablets by intersecting prosopographic timelines.
+  * **Scribal Seal Attribution:** Identifies ancient scribes and cylinder seal impressions with confidence scoring.
+  * **Candidate Joins Card:** Detects virtual and physical joins (such as Louvre fragments `P131610` and `P100089`) with clickable links to immediately inspect matching tablets.
 
 ---
 
-#### Ancient Sumerian Metrology & Academic Unicode Typography
+### 2. Ancient Sumerian Metrology & Academic Unicode Typography
+*Direct capture of the Metrological Measures panel and academic typography engine on administrative tablet `P100004` (Abba-saga livestock bureau).*
+
 ![Sumerian Metrology & Assyriological Unicode Typography](assets/images/02_tablet_metrology_unicode.png)
 
-* **Imperial Metrology Engine:** Automatic conversion of ancient capacity formulas ($\text{gur} \rightarrow \text{barig} \rightarrow \text{bán} \rightarrow \text{sìla}$) into modern Liters and Barley weight in Kilograms ($1\text{ sila3} \approx 1\text{ L} \approx 0.62\text{ kg}$), and weight formulas ($\text{gú} \rightarrow \text{ma-na} \rightarrow \text{gín}$) into grams.
-* **Assyriological Unicode Mode:** Single-click toggle (`🔤 Unicode (š, ṣ, ṭ) ⇄ ASCII`) converting raw ASCII C-ATF (`szu ba-ti`, `1(barig) 4(ban2) masz2 u2-s,a-ab`) into standard academic typography (`šu ba-ti`, `1(barig) 4(ban2) maš₂ u₂-ṣa-ab`) with full Unicode subscript support rendered via Google Fonts (`JetBrains Mono`, `Noto Sans`).
+* **Metrology Conversion Engine:** Automatic conversion of ancient Sumerian capacity formulas ($\text{gur} \rightarrow \text{barig} \rightarrow \text{bán} \rightarrow \text{sìla}$) into modern Liters and Barley weight in Kilograms ($1\text{ sila3} \approx 1\text{ L} \approx 0.62\text{ kg}$), and weight formulas ($\text{gú} \rightarrow \text{ma-na} \rightarrow \text{gín}$) into grams.
+* **Assyriological Unicode Mode:** Single-click toggle (`🔤 Unicode (š, ṣ, ṭ) ⇄ ASCII`) converting raw ASCII transliterations (`szu ba-ti`, `1(barig) 4(ban2) masz2 u2-s,a-ab`) into standard academic typography (`šu ba-ti`, `1(barig) 4(ban2) maš₂ u₂-ṣa-ab`) with full Unicode subscript support rendered via Google Fonts (`JetBrains Mono`, `Noto Sans`).
 
 ---
 
-### 3. Macro-Prosopography Bureaucratic Social Network
-*Full-scale interactive network visualizer (`/api/graph/view`) mapping royal administrators and chancelleries from all 398,000 transactions compiled in DuckDB.*
+### 3. Full-Width Macro-Prosopography Bureaucratic Social Network
+*Full-scale interactive network visualizer (`/api/graph/view`) rendered directly within the application, mapping royal administrators and chancelleries from all 398,000 transactions compiled in DuckDB.*
 
 ![Nisaba Prosopography Network Graph](assets/images/03_prosopography_graph.png)
 
-* **Macro-Scale Analysis:** 200 central imperial figures, 212 bureaucratic links, and 52 administrative clusters color-coded using modularity community detection.
-* **Interactive Node Inspector:** Inspecting official `ab-ba-sa6-ga` displays total administrative volume (3,000+ attested transactions), degree centrality, betweenness rank, and **direct clickable links** to inspect corroborating tablet dossiers.
+* **Macro-Scale Analysis:** Central imperial figures, bureaucratic links, and administrative clusters color-coded using modularity community detection.
+* **Interactive Node Inspector:** Inspecting an official (e.g. `ab-ba-sa6-ga` or `ur-mes`) displays total administrative volume, degree centrality, betweenness rank, and **direct clickable links** to inspect corroborating tablet dossiers.
 
 ---
 
@@ -90,29 +80,26 @@ Nisaba is built around five modular, independently executable computational engi
 
 ---
 
-## 📊 Empirical Benchmarks on Real Archival Corpus
+## 📊 Full Archival Corpus Volume & Analytics (135,253 Tablets)
 
-Measurements performed directly on **5,000 real Ur III cuneiform tablets (`P100001` - `P105000`)** from the CDLI unblocked database dump (`data/raw/cdliatf_unblocked.atf`):
+All statistics below are computed directly on the certified database (`data/processed/nisaba.duckdb`) generated from the complete CDLI unblocked archival dump:
 
-| Pipeline Stage | Processed Volume | Real Execution Time | Real Throughput |
-| :--- | :---: | :---: | :---: |
-| **Streaming Lexer & AST Parser** | **5,000 tablets** (78,897 lines, 241,858 signs) | **6.36 s** | **786 tablets/s** (12,401 lines/s) |
-| **Columnar Parquet Export** | 4 tables (`tablets`, `lines`, `signs`, `kmers`) | **12.64 s** | Streamed zero-loss serialization |
-| **DuckDB Ingestion & Indexing** | Mounted `nisaba.duckdb` | **Instant** | Queryable Parquet views |
-| **Scribe & Author Attribution** | 5,000 tablets evaluated | **0.82 s** | **2,048 scribes identified** (41.0%) |
-| **Chronos Macro-Chronology** | 5,000 tablets resolved | **1.23 s** | **2,515 certified + 1,009 inferred dates** |
-| **Ur III Economic Ledger** | 5,000 tablets audited | **2.32 s** | **24,018 transactions, 9,577 accounts** |
+| Database Entity / Table | Certified Corpus Volume | Epigraphic Description |
+| :--- | :---: | :--- |
+| **`tablets`** | **135,253 tablets** | Complete CDLI Sumerian archival texts indexed |
+| **`lines`** | **2,190,263 lines** | Preserved cuneiform lines with damage brackets (`[]`, `<>`, `#!?`) |
+| **`signs`** | **6,931,353 signs** | Individual classified sign tokens and values |
+| **`kmers`** | **35,081,773 $k$-mers** | 4-mer sequence index for sequence BLAST & virtual joins |
+| **`transactions`** | **398,296 records** | Formulaic triplets ($\langle \text{Qty}, \text{Source } (ki\dots-ta), \text{Recipient } (i3-dab5) \rangle$) |
+| **`officer_balances`** | **135,383 accounts** | Double-entry commodity debit/credit balance sheets |
+| **`author_attributions`** | **135,253 records** | Scribe attributions, patronymics, and cylinder seal certifications |
+| **`chronos_estimates`** | **135,253 records** | Certified regnal years and probabilistic timeline estimations |
+| **`virtual_joins`** | **17 join candidates** | Cross-museum fragment alignments and complementary fracture pairs |
 
-### Columnar Parquet File Sizes (5,000 Tablets):
-* `tablets.parquet`: **76.8 KB** (100% indexed metadata)
-* `lines.parquet`: **2,337.9 KB** (78,897 preserved lines with damage flags)
-* `signs.parquet`: **3,226.6 KB** (241,858 classified sign records)
-* `kmers.parquet`: **3,173.6 KB** (4-mer sequence index)
-
-### Real DuckDB Analytical SQL Query Latencies:
-* `SELECT count(*) FROM signs WHERE is_broken = true` : **1.84 ms**
-* `SELECT clean_value, count(*) GROUP BY clean_value ORDER BY count DESC` (241k rows) : **2.84 ms**
-* Top disburser ranking across 78k lines (`WHERE normalized_text LIKE 'ki %-ta'`) : **3.11 ms**
+### Live Analytical Query Latencies on Full Corpus:
+* `SELECT count(*) FROM signs WHERE is_broken = true` : **42 ms** (scans 6,931,353 signs for broken tokens)
+* `SELECT source_party, count(*) FROM transactions GROUP BY source_party` : **10 ms** (aggregates 398,296 transactions)
+* `SELECT clean_value, count(*) FROM signs GROUP BY clean_value` : **457 ms** (aggregates and groups 6.93 million signs)
 
 ---
 

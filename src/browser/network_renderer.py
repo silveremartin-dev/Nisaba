@@ -164,9 +164,6 @@ class NetworkGraphRenderer:
       <span>Bureaucratic Links: <strong id="stat-edges">{cy_data['summary']['total_edges']}</strong></span>
       <span>Chancelleries/Clusters: <strong id="stat-comms">{cy_data['summary']['communities']}</strong></span>
     </div>
-    <div style="display:flex; gap:8px;">
-      <button class="btn" onclick="backToDossier()">← Back to Tablet Dossier</button>
-    </div>
   </header>
 
   <div class="main-container">

@@ -326,12 +326,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
             </div> <!-- Closes dossier-grid -->
         </div> <!-- Closes viewDossierContainer -->
 
-        <!-- View 2: In-Page Prosopography Graph View (No new tabs) -->
+        <!-- View 2: In-Page Prosopography Graph View -->
         <div id="viewGraphContainer" style="display:none; flex-direction:column; flex:1; height:100%; width:100%; position:relative; overflow:hidden;">
-            <div style="position:absolute; top:12px; right:20px; z-index:100; display:flex; gap:8px;">
-                <button class="nav-btn" onclick="switchView('dossier')">← Back to Tablet Dossier</button>
-                <a id="btnExternalGraph" href="/api/graph/view" target="_blank" class="nav-btn" title="Open graph in separate window if needed">Open in New Tab ↗</a>
-            </div>
             <iframe id="graphFrame" src="" style="width:100%; height:100%; border:none; background:#0b0f19; flex:1;"></iframe>
         </div>
     </div> <!-- Closes workspace -->
