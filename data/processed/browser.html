@@ -387,11 +387,13 @@
         function switchView(view) {
             const dossier = document.getElementById('viewDossierContainer');
             const graph = document.getElementById('viewGraphContainer');
+            const sidebar = document.getElementById('sidebar');
             const btnDossier = document.getElementById('btnNavDossier');
             const btnGraph = document.getElementById('btnNavGraph');
 
             if (view === 'graph') {
                 dossier.style.display = 'none';
+                if (sidebar) sidebar.style.display = 'none';
                 graph.style.display = 'flex';
                 const frame = document.getElementById('graphFrame');
                 const targetSrc = (window.location.protocol === 'file:') ? 'prosopography_graph.html' : `${API_BASE}/api/graph/view`;
@@ -419,6 +421,7 @@
                 btnGraph.classList.add('active');
             } else {
                 dossier.style.display = 'flex';
+                if (sidebar) sidebar.style.display = 'flex';
                 graph.style.display = 'none';
                 btnDossier.classList.add('active');
                 btnGraph.classList.remove('active');
