@@ -16,10 +16,12 @@ CURATED_SHOWCASE_IDS = [
     # 1. Canonical Cross-Museum Virtual Joins & Reunited Broken Fragments
     "P131610",  # TCL 02, 5521 + 5522 (Louvre Museum joined fragments, 15 transactions, scribe ur-mes)
     "P100089",  # AAS 102 + 205 (Physical join of complementary breaks, 11 transactions, scribe lugal-iti-da)
-    "P134231",  # TLB 03, 090 + ASJ 17, 214 107 (Famous Ur III court record / di-til-la)
+    "P134231",  # TLB 03, 090 + ASJ 17, 214 107 (Famous Ur III court record / di-til-la join)
     "P142749",  # AAICAB 1/1, pl. 042, 1911-238 + 1911-239 (Ashmolean joined fragment)
-    "P106055",  # BIN 03, 249 (Ur III royal administration dispatch join)
     "P215079",  # MAD 1, 163 + 165 (Old Akkadian Sargonic joined tablets, 236 transactions)
+    "P110772",  # ITT 2, 00902 + ITT 5, 06850 (Cross-volume Istanbul Museum fragment join)
+    "P113031",  # MVN 02, 031 (Damaged Girsu messenger ration fragment -> virtual join with P128708)
+    "P128708",  # SA 151 (Complementary damaged messenger ration fragment -> virtual join with P113031)
     # 2. Megasized Administrative Ledgers & Multi-Column Balance Sheets
     "P118648",  # MVN 15, 390 (Massive balanced account ledger - 684 transactions!)
     "P101079",  # AnOr 01, 088 (Major grain & livestock ledger - 438 transactions)
@@ -32,6 +34,7 @@ CURATED_SHOWCASE_IDS = [
     "P110694",  # ITT 2, 00824 (Provincial storehouse ledger - 235 transactions)
     "P212246",  # SANTAG 6, 340 (Livestock audit - 231 transactions)
     # 3. Famous Royal Bureaus & Chancery Officers
+    "P106055",  # BIN 03, 249 (Intact Ur III royal dispatch sealed by scribe Lu-Ningirsu)
     "P100001",  # AAS 013 (Classic Umma receipt, full date formula)
     "P100004",  # AAS 016 (Abba-saga receipt with animal metrology)
     "P100007",  # AAS 019 (Sealed receipt, scribe da-da-a)

@@ -268,14 +268,6 @@ class NetworkGraphRenderer:
 
     window.cy = cy;
 
-    function backToDossier() {{
-      if (window.parent && window.parent.switchView) {{
-        window.parent.switchView('dossier');
-      }} else {{
-        window.location.href = BASE_EXPLORER;
-      }}
-    }}
-
     window.addEventListener('resize', () => {{
       if (cy) {{
         cy.resize();

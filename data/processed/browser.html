@@ -707,20 +707,27 @@
             const joinBadge = document.getElementById('joinCountBadge');
             const joinDetails = document.getElementById('joinDetails');
             if (tab.candidate_joins && tab.candidate_joins.length > 0) {
-                joinBadge.innerText = `${tab.candidate_joins.length} Candidates`;
+                joinBadge.innerText = `${tab.candidate_joins.length} Fragment Match${tab.candidate_joins.length > 1 ? 'es' : ''}`;
+                const typeLabels = {
+                    'PHYSICAL_JOIN_DOCUMENTED': 'Certified Physical Fracture Join',
+                    'CROSS_CATALOG_JOIN': 'Cross-Museum Fragment Join',
+                    'VIRTUAL_JOIN_CANDIDATE': 'Broken-Edge Virtual Join Candidate',
+                    'DUPLICATE_ADMIN_SERIES': 'Parallel Administrative Series'
+                };
                 joinDetails.innerHTML = tab.candidate_joins.map(j => {
                     const otherId = (j.id_text_a === tab.id_text) ? j.id_text_b : j.id_text_a;
                     const isJumpable = otherId.startsWith('P');
+                    const label = typeLabels[j.join_type] || j.join_type;
                     return `
                         <div style="font-size:0.82rem; margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
-                            <span>• <strong>${otherId}</strong> (${(j.similarity_score * 100).toFixed(0)}% match, ${j.join_type})</span>
-                            ${isJumpable ? `<button class="page-btn" onclick="selectTablet('${otherId}')">Open Tablet ↗</button>` : ''}
+                            <span>• <strong>${otherId}</strong> (${(j.similarity_score * 100).toFixed(0)}% match — ${label})</span>
+                            ${isJumpable ? `<button class="page-btn" onclick="selectTablet('${otherId}')">Open Fragment ↗</button>` : ''}
                         </div>
                     `;
                 }).join('');
             } else {
-                joinBadge.innerText = '0 Matches';
-                joinDetails.innerText = 'No physical or virtual sequence matches detected.';
+                joinBadge.innerText = '0 Joins';
+                joinDetails.innerText = 'Intact or standalone tablet — no broken-edge fragment joins detected.';
             }
         }
 
@@ -840,7 +847,9 @@
         }
 
         function filterBySearch(term) {
+            switchView('dossier');
             currentSearch = term;
+            currentSelectedId = null;
             document.getElementById('searchInput').value = term;
             const clearBtn = document.getElementById('btnClearSearch');
             if (clearBtn) clearBtn.style.display = 'block';
@@ -858,12 +867,14 @@
             clearTimeout(searchTimer);
             searchTimer = setTimeout(() => {
                 currentSearch = val;
+                currentSelectedId = null;
                 loadPage(1);
             }, 300);
         }
 
         function clearSearch() {
             currentSearch = '';
+            currentSelectedId = null;
             document.getElementById('searchInput').value = '';
             const clearBtn = document.getElementById('btnClearSearch');
             if (clearBtn) clearBtn.style.display = 'none';
@@ -871,8 +882,10 @@
         }
 
         function setCategory(cat) {
+            switchView('dossier');
             currentCategory = cat;
             currentSearch = '';
+            currentSelectedId = null;
             document.getElementById('searchInput').value = '';
             const clearBtn = document.getElementById('btnClearSearch');
             if (clearBtn) clearBtn.style.display = 'none';
@@ -909,7 +922,7 @@
                     const items = await res.json();
                     body.innerHTML = items.map(o => `
                         <tr>
-                            <td><span class="click-link" onclick="closeModal('ledgerModal'); filterBySearch('${o.officer}')">${o.officer}</span></td>
+                            <td><span class="click-link" onclick="closeModal('ledgerModal'); switchView('dossier'); filterBySearch('${o.officer}')">${o.officer}</span></td>
                             <td style="color:var(--accent-green);">${o.commodity}</td>
                             <td>${o.total_received.toLocaleString()}</td>
                             <td>${o.total_expended.toLocaleString()}</td>

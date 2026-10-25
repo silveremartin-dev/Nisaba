@@ -88,7 +88,7 @@ def run_pipeline(
     # Tool 3: Tablet Joiner (Sequence Alignment & Virtual Joins)
     joins = None
     if tool in ("all", "joins"):
-        print("\n[Tool 3/5: Tablet Joiner] Rapprochement de fragments cassés (k-mer BLAST)...")
+        print("\n[Tool 3/5: Tablet Joiner] Broken Fragment Sequence Alignment (k-mer BLAST)...")
         matcher = FragmentMatcher(min_similarity=0.30)
         joins = matcher.find_joins(tablets)
         print(f"      -> Candidate Joins Found: {len(joins)}")
@@ -101,7 +101,7 @@ def run_pipeline(
     # Tool 4: Ur III Economic Ledger (Double-Entry Balance Auditor)
     transactions = None
     if tool in ("all", "ledger"):
-        print("\n[Tool 4/5: Economic Ledger] Réconciliation comptable d'Ur III...")
+        print("\n[Tool 4/5: Economic Ledger] Ur III Double-Entry Accounting Audit...")
         extractor = LedgerExtractor()
         transactions = extractor.extract_corpus(tablets)
         auditor = LedgerAuditor()
@@ -130,7 +130,11 @@ def run_pipeline(
         from src.chronos.network import ProsopographicNetwork
         from src.browser.network_renderer import NetworkGraphRenderer
         net = ProsopographicNetwork()
-        net.build_network(tablets)
+        db_file = os.path.join(output_dir, "nisaba.duckdb")
+        if os.path.exists(db_file) and input_atf == "data/raw/sample_cdli.atf":
+            net.build_network_from_duckdb(db_path=db_file, min_weight=3, max_edges=350)
+        else:
+            net.build_network(tablets)
         net_renderer = NetworkGraphRenderer()
         graph_out = os.path.join(output_dir, "prosopography_graph.html")
         net_renderer.render_network_html(net, output_filepath=graph_out)
