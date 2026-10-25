@@ -27,34 +27,46 @@
 
 ---
 
-### 2. Live Interactive Tablet Visual Explorer (Real Tool in Action)
-*Unedited headless browser screenshot of Nisaba's offline interactive explorer (`browser.html`) running against real CDLI tablets, featuring high-resolution 2D museum photo archives, live syntax highlighting, Bayesian Chronos date resolution, and scribe attribution.*
+### 2. Live Interactive Tablet Visual Explorer & Dossier
+*High-resolution browser capture of Nisaba's visual explorer (`/explorer`), displaying genuine CDLI tablets, high-resolution museum photograph archives, live syntax highlighting, Bayesian Chronos date resolution, scribe attribution, and ancient metrological conversions.*
 
-#### Tablet P100004 (AAS 004): Broken Date Recovered & Scribe Attributed
-![Real Tablet Explorer - P100004](assets/images/real_browser_tablet_p100004.png)
+#### Comprehensive Tablet Dossier with Provenance, Period, and Real-Time Cross-Linking
+![Nisaba Visual Tablet Explorer - Showcase Dossier](assets/images/01_tablet_explorer_showcase.png)
 
-* **Physical Evidence:** Real photograph of `CDLI P100004` (bearing museum mark `AO 19761`), displaying obverse, reverse, top, bottom, and side edges.
-* **Chronos Resolution:** The tablet has a damaged year formula (`mu [ ... ]`). Nisaba's Chronos engine intersects the career overlap of attested disburser **Abbashaga** and receiver **Ur-szu-galam-ma** to date the tablet to **AS01..AS08** (Reign of Amar-Sin).
-* **Scribe Attributed:** `ur-szu-ga-lam-ma` (Patronymic: `ur-sa6-ga`, Title: `dub-sar`, Confidence: 75%).
-* **Linter Status:** 100% Valid C-ATF (Clean bracket parity, canonical sign tokens).
-
----
-
-#### Tablet P100005 (AAS 005): Candidate Joins & Duplicate Receipt Matching
-![Real Tablet Explorer - P100005](assets/images/real_browser_tablet_p100005.png)
-
-* **Physical Evidence:** Photograph of `CDLI P100005` with excavation mark `CF 2` visible on the left edge.
-* **Join Candidate:** Automatically matched with `P100009` (Jaccard similarity: 0.84), identifying a duplicate administrative receipt from Amar-Sin year 4 (`AS04`).
+* **Multi-Filter Corpus Navigation:** Quick filter chips allow instantaneous navigation across **⭐ Showcase**, **✍️ Scribes** (35,278 tablets), **⏳ Chronos Dates** (37,293 tablets), **📊 Ledger Accounts** (76,398 tablets), and **🧩 Virtual Joins** (22 candidates).
+* **Physical Tablet Photograph & Direct CDLI Grounding:** High-resolution multi-aspect photograph with direct one-click link to the official CDLI museum archive (`🔗 Source: CDLI (P100004) ↗`).
+* **Epigraphic Intelligence Engines:**
+  * **Chronos Date Solver:** Recovers damaged year formulas (`mu [ ... ]`) by intersecting bureaucratic timelines to date the tablet to Amar-Sin year 1–8 (`AS01..AS08`).
+  * **Scribal Seal Attribution:** Identifies scribe `ur-szu-ga-lam-ma` (`dub-sar`, son of `ur-sa6-ga`, 75% confidence).
+  * **Transaction Extraction:** Formulaic transaction triplets detailing cattle transfers (`gu4`, `i3-dab5`).
 
 ---
 
-### 3. DuckDB Analytics & Ur III Accounting Ledger Dashboard
-*Real execution across 5,000 authentic Ur III archival tablets (`P100001` - `P105000`) compiled into DuckDB and Apache Parquet in 6.36 seconds.*
+#### Ancient Sumerian Metrology & Academic Unicode Typography
+![Sumerian Metrology & Assyriological Unicode Typography](assets/images/02_tablet_metrology_unicode.png)
 
-![Real DuckDB Analytics & Ledger Dashboard](assets/images/real_ledger_analytics_dashboard.png)
+* **Imperial Metrology Engine:** Automatic conversion of ancient capacity formulas ($\text{gur} \rightarrow \text{barig} \rightarrow \text{bán} \rightarrow \text{sìla}$) into modern Liters and Barley weight in Kilograms ($1\text{ sila3} \approx 1\text{ L} \approx 0.62\text{ kg}$), and weight formulas ($\text{gú} \rightarrow \text{ma-na} \rightarrow \text{gín}$) into grams.
+* **Assyriological Unicode Mode:** Single-click toggle (`🔤 Unicode (š, ṣ, ṭ) ⇄ ASCII`) converting raw ASCII C-ATF (`szu ba-ti`, `1(barig) 4(ban2) masz2 u2-s,a-ab`) into standard academic typography (`šu ba-ti`, `1(barig) 4(ban2) maš₂ u₂-ṣa-ab`) with full Unicode subscript support rendered via Google Fonts (`JetBrains Mono`, `Noto Sans`).
 
-* **Left (DuckDB SQL Terminal):** Live queries against `signs.parquet` and `lines.parquet`. Instant millisecond execution (`1.84 ms` to `2.84 ms`) aggregating 241,858 signs and classifying major commodity flows (`udu`: 3,904, `sze`: 2,130, `sila4`: 1,576, `gu4`: 1,574, `masz2`: 1,158, `kasz`: 975).
-* **Right (Macro-Ledger Net Balance):** Complete double-entry balance sheets for the Puzrish-Dagan livestock bureau. Tracks Abbashaga (-2,840 animals disbursed), Inta'ea (+1,110 animals received), Duga (+935 animals), Nalu (+20 animals), and Lukalla (balanced accounts at Umma).
+---
+
+### 3. Macro-Prosopography Bureaucratic Social Network
+*Full-scale interactive network visualizer (`/api/graph/view`) mapping royal administrators and chancelleries from all 398,000 transactions compiled in DuckDB.*
+
+![Nisaba Prosopography Network Graph](assets/images/03_prosopography_graph.png)
+
+* **Macro-Scale Analysis:** 200 central imperial figures, 212 bureaucratic links, and 52 administrative clusters color-coded using modularity community detection.
+* **Interactive Node Inspector:** Inspecting official `ab-ba-sa6-ga` displays total administrative volume (3,000+ attested transactions), degree centrality, betweenness rank, and **direct clickable links** to inspect corroborating tablet dossiers.
+
+---
+
+### 4. Ur III Central Bureau Balance Sheets & Double-Entry Ledger
+*Instantaneous double-entry accounting audit aggregating debit and credit transaction flows across central imperial clearing houses.*
+
+![Ur III Central Ledger Balance Sheet](assets/images/04_ur3_ledger_balance_sheet.png)
+
+* **Double-Entry Balance Sheets:** Audits transaction triplets ($\langle \text{Quantity/Commodity}, \text{Source } (ki\dots-ta), \text{Destination } (i3-dab5 / ba-zi) \rangle$) across central livestock and grain clearing bureaus.
+* **Net Inventory Tracking:** Reconstructs inventory positions for top officials (**Abbashaga**, **Inta'ea**, **Nalu**, **Duga**, **Lukalla**) with instant cross-filtering into the tablet explorer upon clicking any officer name.
 
 ---
 
