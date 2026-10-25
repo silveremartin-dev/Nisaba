@@ -268,11 +268,19 @@ class NetworkGraphRenderer:
 
     const BASE_EXPLORER = (window.location.protocol === 'file:') ? 'browser.html' : '/explorer';
 
+    function openTablet(tabletId) {{
+      if (window.parent && window.parent.selectTabletFromGraph) {{
+        window.parent.selectTabletFromGraph(tabletId);
+      }} else {{
+        window.location.href = BASE_EXPLORER + '#' + tabletId;
+      }}
+    }}
+
     function inspectNode(node) {{
       const d = node.data();
       const col = commColors[(d.community || 0) % commColors.length];
       const tabs = (d.sample_tablets && d.sample_tablets.length > 0)
-        ? d.sample_tablets.map(t => `<a href="${{BASE_EXPLORER}}#${{t}}" class="tab-link" target="_blank">${{t}}</a>`).join(' ')
+        ? d.sample_tablets.map(t => `<span class="tab-link" onclick="openTablet('${{t}}')" style="cursor:pointer;">${{t}}</span>`).join(' ')
         : '<span style="color:var(--text-muted); font-size:0.8rem;">Historical Ur III transaction official</span>';
 
       document.getElementById('inspector').innerHTML = `
@@ -291,9 +299,9 @@ class NetworkGraphRenderer:
           </div>
 
           <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px;">
-            <a href="${{BASE_EXPLORER}}?search=${{encodeURIComponent(d.label)}}" target="_blank" class="btn" style="text-align: center; text-decoration: none; display: block;">
+            <button onclick="if(window.parent&&window.parent.filterBySearch){{window.parent.filterBySearch('${{d.label}}'); window.parent.switchView('dossier');}}else{{window.location.href='${{BASE_EXPLORER}}?search=${{encodeURIComponent(d.label)}}';}}" class="btn" style="text-align: center; text-decoration: none; display: block; width: 100%;">
               🏺 View All Tablets for ${{d.label}}
-            </a>
+            </button>
           </div>
         </div>
       `;
@@ -311,7 +319,7 @@ class NetworkGraphRenderer:
     cy.on('tap', 'edge', function(evt) {{
       const e = evt.target.data();
       const edgeTabs = (e.tablets && e.tablets.length > 0)
-        ? e.tablets.map(t => `<a href="${{BASE_EXPLORER}}#${{t}}" class="tab-link" target="_blank">${{t}}</a>`).join(' ')
+        ? e.tablets.map(t => `<span class="tab-link" onclick="openTablet('${{t}}')" style="cursor:pointer;">${{t}}</span>`).join(' ')
         : 'Attested in archival transactions';
 
       document.getElementById('inspector').innerHTML = `
@@ -326,9 +334,9 @@ class NetworkGraphRenderer:
             ${{edgeTabs}}
           </div>
           <div style="margin-top: 14px;">
-            <a href="${{BASE_EXPLORER}}?search=${{encodeURIComponent(e.source)}}" target="_blank" class="btn" style="text-align: center; text-decoration: none; display: block;">
+            <button onclick="if(window.parent&&window.parent.filterBySearch){{window.parent.filterBySearch('${{e.source}}'); window.parent.switchView('dossier');}}else{{window.location.href='${{BASE_EXPLORER}}?search=${{encodeURIComponent(e.source)}}';}}" class="btn" style="text-align: center; text-decoration: none; display: block; width: 100%;">
               🏺 Explore Transactions in Tablet Dossier
-            </a>
+            </button>
           </div>
         </div>
       `;

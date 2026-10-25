@@ -34,6 +34,7 @@
         .nav-links { display: flex; align-items: center; gap: 8px; }
         .nav-btn { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 500; cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: all 0.15s; }
         .nav-btn:hover { background: var(--bg-card-hover); border-color: var(--accent-cyan); color: #fff; }
+        .nav-btn.active { background: rgba(56, 189, 248, 0.2); border-color: var(--accent-cyan); color: var(--accent-cyan); font-weight: 700; }
         .nav-btn.primary { background: #0284c7; border-color: #38bdf8; color: #fff; }
         .nav-btn.primary:hover { background: #0369a1; }
 
@@ -141,8 +142,9 @@
             <span class="corpus-badge" id="corpusBadge">Connecting to 135,253 Tablets...</span>
         </div>
         <div class="nav-links">
+            <button class="nav-btn active" id="btnNavDossier" onclick="switchView('dossier')">🏺 Tablet Dossier</button>
+            <button class="nav-btn" id="btnNavGraph" onclick="switchView('graph')">🕸️ Prosopography Graph</button>
             <button class="nav-btn" onclick="openLedgerModal()">📊 Ur III Ledger</button>
-            <button class="nav-btn" onclick="openGraph()">🕸️ Prosopography Graph</button>
             <button class="nav-btn" onclick="openDocs()">⚡ SQL / REST API</button>
             <button class="nav-btn primary" onclick="openManualModal()">📖 User Manual</button>
         </div>
@@ -152,8 +154,9 @@
         <!-- Sidebar -->
         <div id="sidebar">
             <div class="sidebar-search">
-                <div class="search-input-wrapper">
+                <div class="search-input-wrapper" style="position:relative; display:flex; align-items:center;">
                     <input type="text" id="searchInput" class="search-input" placeholder="Search P-number, official, word..." oninput="handleSearch()">
+                    <button id="btnClearSearch" onclick="clearSearch()" style="position:absolute; right:8px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.9rem; display:none;" title="Clear search">✕</button>
                 </div>
                 <div class="filter-row">
                     <div class="filter-chip active" id="chipShowcase" onclick="setCategory('showcase')">⭐ Showcase</div>
@@ -178,20 +181,22 @@
 
         <!-- Main Workspace -->
         <div id="workspace">
-            <div class="dossier-header">
-                <div class="dossier-title">
-                    <h2 id="viewId">Select a Tablet</h2>
-                    <div class="dossier-meta">
-                        <span>Designation: <strong id="viewDesignation">—</strong></span>
-                        <span>Period: <strong id="viewPeriod">—</strong></span>
-                        <span>Provenance: <strong id="viewProvenance">—</strong></span>
-                        <span>Lines: <strong id="viewLines">—</strong></span>
-                        <span>Source: <a id="viewSourceLink" href="#" target="_blank" style="color:var(--accent-cyan); font-weight:600; text-decoration:underline;">—</a></span>
+            <!-- View 1: Tablet Dossier -->
+            <div id="viewDossierContainer" style="display:flex; flex-direction:column; flex:1; overflow-y:auto; height:100%;">
+                <div class="dossier-header">
+                    <div class="dossier-title">
+                        <h2 id="viewId">Select a Tablet</h2>
+                        <div class="dossier-meta">
+                            <span>Designation: <strong id="viewDesignation">—</strong></span>
+                            <span>Period: <strong id="viewPeriod">—</strong></span>
+                            <span>Provenance: <strong id="viewProvenance">—</strong></span>
+                            <span>Lines: <strong id="viewLines">—</strong></span>
+                            <span>Source: <a id="viewSourceLink" href="#" target="_blank" style="color:var(--accent-cyan); font-weight:600; text-decoration:underline;">—</a></span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="dossier-grid">
+                <div class="dossier-grid">
                 <!-- Left Column: Transliteration & Metrology & Ledger -->
                 <div>
                     <!-- Transliteration Panel -->
@@ -298,6 +303,15 @@
                     </div>
                 </div>
             </div>
+
+            <!-- In-Page Prosopography Graph View (No new tabs) -->
+            <div id="viewGraphContainer" style="display:none; flex:1; height:100%; position:relative;">
+                <div style="position:absolute; top:12px; right:20px; z-index:100; display:flex; gap:8px;">
+                    <button class="nav-btn" onclick="switchView('dossier')">← Back to Tablet Dossier</button>
+                    <a id="btnExternalGraph" href="/api/graph/view" target="_blank" class="nav-btn" title="Open graph in separate window if needed">Open in New Tab ↗</a>
+                </div>
+                <iframe id="graphFrame" src="" style="width:100%; height:100%; border:none; background:#0b0f19;"></iframe>
+            </div>
         </div>
     </div>
 
@@ -369,10 +383,35 @@
         let currentLoadedTablet = null;
         let useAssyriologicalUnicode = false;
 
-        function openGraph() {
-            const url = (window.location.protocol === 'file:') ? 'prosopography_graph.html' : '/api/graph/view';
-            window.open(url, '_blank');
+        function switchView(view) {
+            const dossier = document.getElementById('viewDossierContainer');
+            const graph = document.getElementById('viewGraphContainer');
+            const btnDossier = document.getElementById('btnNavDossier');
+            const btnGraph = document.getElementById('btnNavGraph');
+
+            if (view === 'graph') {
+                dossier.style.display = 'none';
+                graph.style.display = 'block';
+                const frame = document.getElementById('graphFrame');
+                const targetSrc = (window.location.protocol === 'file:') ? 'prosopography_graph.html' : `${API_BASE}/api/graph/view`;
+                if (!frame.src || frame.src === 'about:blank' || !frame.src.endsWith(targetSrc)) {
+                    frame.src = targetSrc;
+                }
+                btnDossier.classList.remove('active');
+                btnGraph.classList.add('active');
+            } else {
+                dossier.style.display = 'flex';
+                graph.style.display = 'none';
+                btnDossier.classList.add('active');
+                btnGraph.classList.remove('active');
+            }
         }
+
+        window.switchView = switchView;
+        window.selectTabletFromGraph = function(tabletId) {
+            switchView('dossier');
+            selectTablet(tabletId);
+        };
 
         function openDocs() {
             window.open(`${API_BASE}/docs`, '_blank');
@@ -573,23 +612,8 @@
                 srcLink.innerText = `CDLI (${tab.id_text}) ↗`;
             }
 
-            // Photograph Rendering
-            const photoBox = document.getElementById('photoBox');
-            const imgUrl = (tab.photos && tab.photos.local_image_url) 
-                ? (tab.photos.local_image_url.startsWith('http') ? tab.photos.local_image_url : `${API_BASE}${tab.photos.local_image_url}`) 
-                : (tab.photos ? tab.photos.cdli_image_url : null);
-
-            if (imgUrl) {
-                photoBox.innerHTML = `
-                    <img src="${imgUrl}" class="photo-img" alt="Tablet ${tab.id_text}" onerror="showPhotoPlaceholder('${cdliUrl}', '${tab.id_text}')">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                        <span style="font-size:0.75rem; color:var(--text-muted);">High-Resolution Epigraphic Capture</span>
-                        <a href="${cdliUrl}" target="_blank" style="color:var(--accent-cyan); font-size:0.8rem; text-decoration:none; font-weight:600;">🔗 Source: CDLI (${tab.id_text}) ↗</a>
-                    </div>
-                `;
-            } else {
-                showPhotoPlaceholder(cdliUrl, tab.id_text);
-            }
+            // High-Resolution Photograph or Lineart Hand Copy Drawing (Cascading Fallback)
+            renderPhoto(tab, cdliUrl);
 
             // Transliteration with Cross-Linking
             renderTransliteration(tab);
@@ -711,6 +735,59 @@
             }
         }
 
+        function renderPhoto(tab, cdliUrl) {
+            const photoBox = document.getElementById('photoBox');
+            const sources = [];
+
+            if (tab.photos && tab.photos.local_image_url) {
+                const loc = tab.photos.local_image_url.startsWith('http') 
+                    ? tab.photos.local_image_url 
+                    : `${API_BASE}${tab.photos.local_image_url}`;
+                sources.push({ url: loc, isDrawing: false, label: '📷 Local Museum Photo Archive' });
+            }
+            sources.push({ 
+                url: `https://cdli.mpiwg-berlin.mpg.de/dl/photo/${tab.id_text}.jpg`, 
+                isDrawing: false, 
+                label: '📷 High-Resolution Museum Photograph' 
+            });
+            sources.push({ 
+                url: `https://cdli.mpiwg-berlin.mpg.de/dl/lineart/${tab.id_text}_l.jpg`, 
+                isDrawing: true, 
+                label: '🖋️ CDLI Epigraphic Hand Copy (Drawing)' 
+            });
+            sources.push({ 
+                url: `https://cdli.mpiwg-berlin.mpg.de/dl/tn_lineart/${tab.id_text}_l.jpg`, 
+                isDrawing: true, 
+                label: '🖋️ CDLI Epigraphic Line Art Drawing' 
+            });
+
+            let srcIdx = 0;
+            function tryNext() {
+                if (srcIdx >= sources.length) {
+                    showPhotoPlaceholder(cdliUrl, tab.id_text);
+                    return;
+                }
+                const current = sources[srcIdx++];
+                const testImg = new Image();
+                testImg.onload = function() {
+                    const tagColor = current.isDrawing ? 'var(--accent-gold)' : 'var(--accent-cyan)';
+                    photoBox.innerHTML = `
+                        <img src="${current.url}" class="photo-img" alt="Tablet ${tab.id_text}">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                            <span style="font-size:0.75rem; color:${tagColor}; font-weight:600;">${current.label}</span>
+                            <a href="${cdliUrl}" target="_blank" style="color:var(--accent-cyan); font-size:0.8rem; text-decoration:none; font-weight:600;">🔗 Source: CDLI (${tab.id_text}) ↗</a>
+                        </div>
+                    `;
+                };
+                testImg.onerror = function() {
+                    tryNext();
+                };
+                testImg.src = current.url;
+            }
+
+            tryNext();
+        }
+
         function showPhotoPlaceholder(cdliUrl, idText) {
             const url = cdliUrl || ('https://cdli.mpiwg-berlin.mpg.de/artifacts/' + (currentSelectedId || '').replace(/^P/, ''));
             const id = idText || currentSelectedId || 'CDLI Record';
@@ -718,8 +795,8 @@
             box.innerHTML = `
                 <div class="photo-placeholder">
                     <div style="font-size:2rem; margin-bottom:8px;">🏛️</div>
-                    <div style="font-weight:700; color:#f8fafc; font-size:0.95rem;">No Photograph Archived</div>
-                    <div style="font-size:0.8rem; color:#94a3b8; margin: 6px 0 12px 0;">This accession tablet does not currently have an open high-resolution photo.</div>
+                    <div style="font-weight:700; color:#f8fafc; font-size:0.95rem;">No Photo or Drawing Cataloged</div>
+                    <div style="font-size:0.8rem; color:#94a3b8; margin: 6px 0 12px 0;">This accession tablet does not currently have an open high-res photograph or hand drawing.</div>
                     <a href="${url}" target="_blank" class="nav-btn primary" style="display:inline-flex; align-items:center; gap:6px; text-decoration:none;">
                         🔗 Source: CDLI (${id}) ↗
                     </a>
@@ -748,6 +825,8 @@
         function filterBySearch(term) {
             currentSearch = term;
             document.getElementById('searchInput').value = term;
+            const clearBtn = document.getElementById('btnClearSearch');
+            if (clearBtn) clearBtn.style.display = 'block';
             currentCategory = 'all';
             updateCategoryChips();
             document.getElementById('tabletList').innerHTML = '<li style="padding: 20px; text-align: center; color: var(--accent-cyan); font-size: 0.85rem;">⏳ Searching for "' + term + '"...</li>';
@@ -756,15 +835,30 @@
 
         let searchTimer = null;
         function handleSearch() {
+            const val = document.getElementById('searchInput').value;
+            const clearBtn = document.getElementById('btnClearSearch');
+            if (clearBtn) clearBtn.style.display = val.trim() ? 'block' : 'none';
             clearTimeout(searchTimer);
             searchTimer = setTimeout(() => {
-                currentSearch = document.getElementById('searchInput').value;
+                currentSearch = val;
                 loadPage(1);
             }, 300);
         }
 
+        function clearSearch() {
+            currentSearch = '';
+            document.getElementById('searchInput').value = '';
+            const clearBtn = document.getElementById('btnClearSearch');
+            if (clearBtn) clearBtn.style.display = 'none';
+            loadPage(1);
+        }
+
         function setCategory(cat) {
             currentCategory = cat;
+            currentSearch = '';
+            document.getElementById('searchInput').value = '';
+            const clearBtn = document.getElementById('btnClearSearch');
+            if (clearBtn) clearBtn.style.display = 'none';
             updateCategoryChips();
             document.getElementById('tabletList').innerHTML = '<li style="padding: 20px; text-align: center; color: var(--accent-cyan); font-size: 0.85rem;">⏳ Loading ' + cat + ' tablets...</li>';
             loadPage(1);

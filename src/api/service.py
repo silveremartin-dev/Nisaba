@@ -129,11 +129,8 @@ class NisabaDataService:
                         params.extend([search_pattern, search_pattern])
 
             if category == "showcase":
-                showcase_ids = [
-                    'P100001', 'P100002', 'P100003', 'P100004', 'P100005',
-                    'P100006', 'P100007', 'P100008', 'P100009', 'P100010',
-                    'P100012', 'P100014', 'P100015', 'P100089', 'P106055',
-                    'P131610', 'P134231', 'P142749', 'P285811'
+                showcase_ids = [f"P{100000+i}" for i in range(1, 60)] + [
+                    'P100089', 'P106055', 'P131610', 'P134231', 'P142749', 'P285811'
                 ]
                 where_clauses.append(f"id_text IN ({', '.join([repr(x) for x in showcase_ids])})")
             elif category == "scribes":
@@ -261,6 +258,8 @@ class NisabaDataService:
                 "has_local_image": has_local,
                 "local_image_url": f"/assets/real_tablets/{p_clean}.jpg" if has_local else None,
                 "cdli_image_url": f"https://cdli.mpiwg-berlin.mpg.de/dl/photo/{p_clean}.jpg",
+                "lineart_url": f"https://cdli.mpiwg-berlin.mpg.de/dl/lineart/{p_clean}_l.jpg",
+                "tn_lineart_url": f"https://cdli.mpiwg-berlin.mpg.de/dl/tn_lineart/{p_clean}_l.jpg",
                 "source_url": f"https://cdli.mpiwg-berlin.mpg.de/artifacts/{numeric_id}",
                 "source_label": f"CDLI ({p_clean})",
             }
