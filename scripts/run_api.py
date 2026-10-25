@@ -13,6 +13,7 @@ def main():
     parser.add_argument("--host", default="127.0.0.1", help="Bind host address")
     parser.add_argument("--port", type=int, default=8000, help="Bind port number")
     parser.add_argument("--reload", action="store_true", help="Enable hot reload")
+    args = parser.parse_args()
     import sys
     import os
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

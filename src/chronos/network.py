@@ -148,11 +148,100 @@ class ProsopographicNetwork:
                 "degree_centrality": round(deg_centrality.get(node, 0.0), 4),
                 "betweenness_centrality": round(betweenness.get(node, 0.0), 4),
                 "community_id": community_map.get(node, 0),
+                "sample_tablets": sorted(list(actor_tablets.get(node, set())))[:6],
             }
             # Set attributes on NetworkX node
             self.graph.nodes[node].update(self._node_metadata[node])
 
         return self.graph
+
+    def build_network_from_duckdb(
+        self,
+        db_path: str = "data/processed/nisaba.duckdb",
+        min_weight: int = 3,
+        max_edges: int = 350,
+    ) -> nx.Graph:
+        """
+        Constructs macro-prosopographic network directly from all 398,000 transactions in DuckDB.
+        """
+        import duckdb
+        con = duckdb.connect(db_path, read_only=True)
+        try:
+            query = """
+                SELECT source_party, receiving_party, count(*) as weight, list(distinct id_text)[:8] as tabs
+                FROM transactions
+                WHERE source_party != 'Unknown' AND receiving_party != 'Unknown' AND source_party != receiving_party
+                GROUP BY source_party, receiving_party
+                HAVING count(*) >= ?
+                ORDER BY weight DESC
+                LIMIT ?
+            """
+            rows = con.execute(query, [min_weight, max_edges]).fetchall()
+
+            self.graph.clear()
+            self._node_metadata.clear()
+
+            node_tablets: Dict[str, Set[str]] = {}
+            for u, v, w, tabs in rows:
+                self.graph.add_edge(u, v, weight=w, tablets=tabs)
+                node_tablets.setdefault(u, set()).update(tabs)
+                node_tablets.setdefault(v, set()).update(tabs)
+
+            degree_dict = dict(self.graph.degree())
+            deg_centrality = nx.degree_centrality(self.graph) if len(self.graph) > 0 else {}
+            betweenness = nx.betweenness_centrality(self.graph) if len(self.graph) > 0 else {}
+
+            community_map: Dict[str, int] = {}
+            if len(self.graph) > 1 and self.graph.number_of_edges() > 0:
+                try:
+                    communities = list(nx.algorithms.community.greedy_modularity_communities(self.graph))
+                    for comm_id, members in enumerate(communities):
+                        for member in members:
+                            community_map[member] = comm_id
+                except Exception:
+                    for idx, node in enumerate(self.graph.nodes()):
+                        community_map[node] = 0
+            else:
+                for node in self.graph.nodes():
+                    community_map[node] = 0
+
+            # Historical chancellery mapping
+            bureau_map = {
+                "ab-ba-sa6-ga": "Puzrish-Dagan (Livestock Intake)",
+                "na-lu5": "Puzrish-Dagan (Disbursement)",
+                "in-ta-e3-a": "Puzrish-Dagan (Central Accounting)",
+                "ur-szu-ga-lam-ma": "Puzrish-Dagan (Bovine Bureau)",
+                "du11-ga": "Puzrish-Dagan (Expenditures)",
+                "lu2-kal-la": "Umma (Chancellery Archon)",
+                "ensi2-ka": "Umma (Governor Chancellery)",
+                "ur-mes": "Ur / Puzrish-Dagan (Seal Bureau)",
+                "da-da-ga": "Umma (Finance & Metals)",
+            }
+
+            for node in self.graph.nodes():
+                # Count total transactions involving this official
+                tab_count = con.execute(
+                    "SELECT count(distinct id_text) FROM transactions WHERE source_party = ? OR receiving_party = ?",
+                    [node, node]
+                ).fetchone()[0]
+
+                role = bureau_map.get(node, "Chancellery Administrator")
+                self._node_metadata[node] = {
+                    "name": node,
+                    "role": role,
+                    "tablet_count": tab_count,
+                    "attested_years": ["Ur III Imperial Period"],
+                    "degree": degree_dict.get(node, 0),
+                    "degree_centrality": round(deg_centrality.get(node, 0.0), 4),
+                    "betweenness_centrality": round(betweenness.get(node, 0.0), 4),
+                    "community_id": community_map.get(node, 0),
+                    "sample_tablets": sorted(list(node_tablets.get(node, set())))[:6],
+                }
+                self.graph.nodes[node].update(self._node_metadata[node])
+
+            return self.graph
+        finally:
+            con.close()
 
     def get_top_influencers(self, top_n: int = 15) -> List[Dict[str, Any]]:
         """Returns the top central officials ranked by betweenness centrality and degree."""
@@ -185,6 +274,7 @@ class ProsopographicNetwork:
                     "degree": meta["degree"],
                     "betweenness": meta["betweenness_centrality"],
                     "community": meta["community_id"],
+                    "sample_tablets": meta.get("sample_tablets", []),
                 }
             })
 

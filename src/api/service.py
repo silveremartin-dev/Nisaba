@@ -9,12 +9,16 @@ import duckdb
 import pandas as pd
 
 
+from src.ledger.metrology import MetrologyEngine
+
+
 class NisabaDataService:
     """Provides querying capabilities over Nisaba DuckDB tables and analytical Parquet outputs."""
 
     def __init__(self, db_path: str = "data/processed/nisaba.duckdb", processed_dir: str = "data/processed"):
         self.db_path = db_path
         self.processed_dir = processed_dir
+        self.metrology = MetrologyEngine()
 
     def _get_connection(self) -> duckdb.DuckDBPyConnection:
         """Returns a read-only DuckDB connection."""
@@ -81,6 +85,7 @@ class NisabaDataService:
         provenance: Optional[str] = None,
         has_date: Optional[bool] = None,
         search: Optional[str] = None,
+        category: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Lists tablets with pagination and optional filters."""
         con = self._get_connection()
@@ -97,14 +102,59 @@ class NisabaDataService:
                 where_clauses.append("has_date = ?")
                 params.append(has_date)
             if search:
-                where_clauses.append("(id_text ILIKE ? OR designation ILIKE ?)")
-                search_pattern = f"%{search}%"
-                params.extend([search_pattern, search_pattern])
+                clean_search = search.strip()
+                if clean_search.upper().startswith("P") and any(c.isdigit() for c in clean_search):
+                    where_clauses.append("id_text ILIKE ?")
+                    params.append(f"{clean_search}%")
+                else:
+                    # Check if exact match exists in transactions or author attributions
+                    c_low = clean_search.lower()
+                    exact_matches = con.execute("""
+                        SELECT DISTINCT id_text FROM transactions 
+                        WHERE source_party = ? OR receiving_party = ? OR commodity = ?
+                        UNION
+                        SELECT DISTINCT id_text FROM author_attributions 
+                        WHERE identified_scribe = ?
+                        LIMIT 3000
+                    """, [c_low, c_low, c_low, clean_search]).fetchall()
+
+                    if exact_matches:
+                        matched_ids = [r[0] for r in exact_matches]
+                        id_list_str = ", ".join([repr(x) for x in matched_ids])
+                        where_clauses.append(f"(id_text IN ({id_list_str}) OR designation ILIKE ?)")
+                        params.append(f"%{clean_search}%")
+                    else:
+                        where_clauses.append("(id_text ILIKE ? OR designation ILIKE ?)")
+                        search_pattern = f"%{clean_search}%"
+                        params.extend([search_pattern, search_pattern])
+
+            if category == "showcase":
+                showcase_ids = [
+                    'P100001', 'P100002', 'P100003', 'P100004', 'P100005',
+                    'P100006', 'P100007', 'P100008', 'P100009', 'P100010',
+                    'P100012', 'P100014', 'P100015', 'P100089', 'P106055',
+                    'P131610', 'P134231', 'P142749', 'P285811'
+                ]
+                where_clauses.append(f"id_text IN ({', '.join([repr(x) for x in showcase_ids])})")
+            elif category == "scribes":
+                where_clauses.append("id_text IN (SELECT id_text FROM author_attributions WHERE identified_scribe != 'Unknown')")
+            elif category == "dates":
+                where_clauses.append("id_text IN (SELECT id_text FROM chronos_estimates WHERE status IN ('CERTIFIED_DATED', 'ESTIMATED'))")
+            elif category == "joins":
+                where_clauses.append("id_text IN (SELECT id_text_a FROM virtual_joins UNION SELECT id_text_b FROM virtual_joins)")
+            elif category == "transactions":
+                where_clauses.append("id_text IN (SELECT DISTINCT id_text FROM transactions)")
 
             where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
             total = con.execute(f"SELECT COUNT(*) FROM tablets {where_str}", params).fetchone()[0]
-            query = f"SELECT * FROM tablets {where_str} ORDER BY id_text LIMIT ? OFFSET ?"
+            # Prioritize Ur III chancery texts (P100000+) by default over archaic Uruk pictographs
+            query = f"""
+                SELECT * FROM tablets 
+                {where_str} 
+                ORDER BY CASE WHEN id_text LIKE 'P1%' THEN 0 ELSE 1 END, id_text 
+                LIMIT ? OFFSET ?
+            """
             query_params = list(params) + [limit, offset]
             df = con.execute(query, query_params).df()
 
@@ -133,6 +183,31 @@ class NisabaDataService:
                 [id_text]
             ).df()
             tablet["lines"] = df_lines.to_dict(orient="records")
+
+            # Infer Period & Provenance if unassigned
+            raw_all_lines = " ".join([str(l.get("raw_text", "")) for l in tablet["lines"]]).lower()
+            p_num = id_text.replace("P", "")
+            if not tablet.get("period") or tablet.get("period") in ("Unassigned", "None", ""):
+                if p_num.isdigit() and int(p_num) >= 100000:
+                    tablet["period"] = "Ur III (ca. 2112–2004 BC)"
+                elif p_num.isdigit() and int(p_num) < 6000:
+                    tablet["period"] = "Uruk IV–III / Proto-Cuneiform (ca. 3200–3000 BC)"
+                else:
+                    tablet["period"] = "Ur III (ca. 2112–2004 BC)"
+
+            if not tablet.get("provenance") or tablet.get("provenance") in ("Unassigned", "None", ""):
+                if any(k in raw_all_lines for k in ["ab-ba-sa6-ga", "na-lu5", "in-ta-e3-a", "du11-ga", "ur-szu-ga-lam-ma", "masz-da3", "szu-esz5", "ezem-mah"]):
+                    tablet["provenance"] = "Puzrish-Dagan (Drehem) — Royal Livestock Bureau"
+                elif any(k in raw_all_lines for k in ["lu2-kal-la", "ur-{d}szara2", "da-da-ga", "ensi2-ka", "sze-kar", "min-esz3", "umma"]):
+                    tablet["provenance"] = "Umma — Chancery & Agricultural Depot"
+                elif any(k in raw_all_lines for k in ["lagasz", "girsu", "ba-zi", "ur-{d}lamma"]):
+                    tablet["provenance"] = "Girsu (Lagash) — State Granary & Textiles"
+                elif any(k in raw_all_lines for k in ["nibru", "gu4-si-su", "inanna"]):
+                    tablet["provenance"] = "Nippur — Sacred City of Enlil"
+                elif any(k in raw_all_lines for k in ["uri5", "nanna"]):
+                    tablet["provenance"] = "Ur — Imperial Capital"
+                else:
+                    tablet["provenance"] = "Southern Mesopotamia (Sumer)"
 
             # Author attribution
             authors_path = os.path.join(self.processed_dir, "author_attributions.parquet")
@@ -163,11 +238,31 @@ class NisabaDataService:
                 ).df()
                 tablet["candidate_joins"] = df_joins.to_dict(orient="records")
 
-            # Photos
+            # Transactions
+            tx_path = os.path.join(self.processed_dir, "transactions.parquet")
+            tablet["transactions"] = []
+            if os.path.exists(tx_path):
+                p_norm = tx_path.replace("\\", "/")
+                df_tx = con.execute(
+                    f"SELECT quantity, commodity, source_party, receiving_party, action_type, month, year FROM read_parquet('{p_norm}') WHERE id_text = ?",
+                    [id_text]
+                ).df()
+                tablet["transactions"] = df_tx.to_dict(orient="records")
+
+            # Metrology / Measures conversion
+            tablet["metrology"] = self.metrology.parse_tablet_metrology(tablet["lines"])
+
+            # Photos & Official Source Reference
             p_clean = id_text.strip().upper()
+            numeric_id = p_clean[1:] if p_clean.startswith("P") else p_clean
+            local_img_path = os.path.join("assets", "real_tablets", f"{p_clean}.jpg")
+            has_local = os.path.exists(local_img_path)
             tablet["photos"] = {
-                "cdli_page": f"https://cdli.mpiwg-berlin.mpg.de/artifacts/{p_clean[1:] if p_clean.startswith('P') else p_clean}",
+                "has_local_image": has_local,
+                "local_image_url": f"/assets/real_tablets/{p_clean}.jpg" if has_local else None,
                 "cdli_image_url": f"https://cdli.mpiwg-berlin.mpg.de/dl/photo/{p_clean}.jpg",
+                "source_url": f"https://cdli.mpiwg-berlin.mpg.de/artifacts/{numeric_id}",
+                "source_label": f"CDLI ({p_clean})",
             }
 
             return tablet
@@ -226,7 +321,7 @@ class NisabaDataService:
             clauses = []
             params = []
             if officer:
-                clauses.append("(source_official ILIKE ? OR recipient_official ILIKE ?)")
+                clauses.append("(source_party ILIKE ? OR receiving_party ILIKE ?)")
                 off_pat = f"%{officer}%"
                 params.extend([off_pat, off_pat])
             if commodity:

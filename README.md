@@ -3,7 +3,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![DuckDB](https://img.shields.io/badge/duckdb-1.1+-yellow.svg)](https://duckdb.org/)
 [![Apache Arrow / Parquet](https://img.shields.io/badge/parquet-columnar-green.svg)](https://arrow.apache.org/)
-[![Tests: 68 Passing](https://img.shields.io/badge/tests-68%20passed-brightgreen.svg)](tests/)
+[![Tests: 72 Passing](https://img.shields.io/badge/tests-72%20passed-brightgreen.svg)](tests/)
 [![Corpus: 135,254 Tablets](https://img.shields.io/badge/CDLI%20Corpus-135%2C254%20texts-orange.svg)](data/raw/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
@@ -201,14 +201,18 @@ xdg-open data/processed/browser.html         # Linux
 
 ## 🚀 Quick Start & CLI Usage
 
-### 1. Installation
+### 1. One-Click Quick Start
 ```bash
-git clone https://github.com/silveremartin-dev/Nisaba.git
-cd Nisaba
-py -m pip install -r requirements.txt
+# Windows
+.\start.bat          # Launches Nisaba and opens the Tablet Explorer in your browser
+.\start.bat test     # Runs the automated test suite
+
+# Linux / macOS
+./start.sh
+./start.sh test
 ```
 
-### 2. Run the Full Test Suite (30 Tests Passing)
+### 2. Run the Full Test Suite (72 Tests Passing)
 ```bash
 py -m pytest tests/ -v
 ```

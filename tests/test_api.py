@@ -74,6 +74,64 @@ def test_api_ledger_officials():
     assert isinstance(res.json(), list)
 
 
+def test_api_ledger_transactions():
+    # Unfiltered transactions
+    res = client.get("/api/ledger/transactions?limit=10")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+
+    # Filtered by commodity
+    res_comm = client.get("/api/ledger/transactions?commodity=udu&limit=5")
+    assert res_comm.status_code == 200
+    assert isinstance(res_comm.json(), list)
+
+    # Filtered by officer
+    res_off = client.get("/api/ledger/transactions?officer=ab-ba-sa6-ga&limit=5")
+    assert res_off.status_code == 200
+    assert isinstance(res_off.json(), list)
+
+
+def test_api_tablets_advanced_filters():
+    # Filter by period
+    res_period = client.get("/api/tablets?period=Ur%20III&limit=5")
+    assert res_period.status_code == 200
+    data_period = res_period.json()
+    assert "items" in data_period
+
+    # Filter by has_date
+    res_date = client.get("/api/tablets?has_date=true&limit=5")
+    assert res_date.status_code == 200
+
+    # Search filter
+    res_search = client.get("/api/tablets?search=P100001&limit=5")
+    assert res_search.status_code == 200
+
+
+def test_api_search_kmer():
+    res = client.get("/api/search?q=udu&mode=kmer&limit=5")
+    assert res.status_code == 200
+    assert isinstance(res.json(), list)
+
+
+def test_api_graph_view_html():
+    res = client.get("/api/graph/view")
+    assert res.status_code == 200
+    assert "text/html" in res.headers.get("content-type", "")
+    assert "<!DOCTYPE html>" in res.text or "<html" in res.text
+
+
+def test_api_explorer_html():
+    res = client.get("/explorer")
+    assert res.status_code == 200
+    assert "text/html" in res.headers.get("content-type", "")
+    assert "<!DOCTYPE html>" in res.text or "<html" in res.text
+
+    # Test redirect /browser -> /explorer
+    res_redir = client.get("/browser", follow_redirects=False)
+    assert res_redir.status_code in (307, 302, 308, 301)
+
+
 def test_api_prosopography_graph():
     # Cytoscape format
     res_cy = client.get("/api/graph/prosopography?format=cytoscape&max_nodes=20")
@@ -88,3 +146,52 @@ def test_api_prosopography_graph():
     data_d3 = res_d3.json()
     assert "nodes" in data_d3
     assert "links" in data_d3
+
+
+def test_api_category_filter():
+    for cat in ["showcase", "scribes", "dates", "joins", "transactions"]:
+        res = client.get(f"/api/tablets?category={cat}&limit=5")
+        assert res.status_code == 200
+        data = res.json()
+        assert "items" in data
+        assert len(data["items"]) > 0
+
+
+def test_api_metrology_parsing():
+    from src.ledger.metrology import MetrologyEngine
+
+    engine = MetrologyEngine()
+
+    # Test capacity parsing
+    lines = [
+        {"line_number": "1", "raw_text": "2(barig) 3(ban2) sze gur"},
+        {"line_number": "2", "raw_text": "5(disz) gin2 ku3-babbar"},
+        {"line_number": "3", "raw_text": "10(disz) udu"},
+    ]
+    res = engine.parse_tablet_metrology(lines)
+    assert len(res) == 3
+
+    types = [r["type"] for r in res]
+    assert "Capacity (Volume)" in types
+    assert "Weight (Mass)" in types
+    assert "Discrete Count" in types
+
+
+def test_api_official_search_and_source_link():
+    # Test searching for an official name in ledger
+    res = client.get("/api/tablets?search=ab-ba-sa6-ga&limit=5")
+    assert res.status_code == 200
+    data = res.json()
+    assert "items" in data
+    assert len(data["items"]) > 0
+
+    # Test tablet detail source URL
+    res_det = client.get("/api/tablets/P100001")
+    assert res_det.status_code == 200
+    det = res_det.json()
+    assert "photos" in det
+    assert "source_url" in det["photos"]
+    assert "cdli.mpiwg-berlin.mpg.de/artifacts" in det["photos"]["source_url"]
+
+
+

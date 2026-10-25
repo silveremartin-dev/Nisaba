@@ -8,7 +8,8 @@ import os
 from typing import Any, Dict, List, Literal, Optional
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from src.api.service import NisabaDataService
@@ -78,6 +79,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+if os.path.exists("assets"):
+    app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+
 service = NisabaDataService()
 
 
@@ -119,6 +123,7 @@ def list_tablets(
     provenance: Optional[str] = Query(None, description="Filter by city/provenance"),
     has_date: Optional[bool] = Query(None, description="Filter tablets by date presence"),
     search: Optional[str] = Query(None, description="Filter by ID (P-number) or designation"),
+    category: Optional[str] = Query(None, description="Filter by category: showcase, scribes, dates, joins, transactions"),
 ):
     """Lists cuneiform tablets with pagination, period filtering, and provenance attributes."""
     data = service.list_tablets(
@@ -128,6 +133,7 @@ def list_tablets(
         provenance=provenance,
         has_date=has_date,
         search=search,
+        category=category,
     )
     return TabletListResponse(**data)
 
@@ -174,11 +180,15 @@ _cached_network: Optional[ProsopographicNetwork] = None
 def _get_or_build_network() -> ProsopographicNetwork:
     global _cached_network
     if _cached_network is None:
-        sample_file = "data/raw/sample_cdli.atf"
-        parser = ATFParser()
-        tablets = parser.parse_file(sample_file)
         net = ProsopographicNetwork()
-        net.build_network(tablets, min_co_occurrences=1)
+        db_path = "data/processed/nisaba.duckdb"
+        if os.path.exists(db_path):
+            net.build_network_from_duckdb(db_path=db_path, min_weight=3, max_edges=350)
+        else:
+            sample_file = "data/raw/sample_cdli.atf"
+            parser = ATFParser()
+            tablets = parser.parse_file(sample_file)
+            net.build_network(tablets, min_co_occurrences=1)
         _cached_network = net
     return _cached_network
 
@@ -209,3 +219,20 @@ def view_graph_html():
     renderer.render_network_html(net, output_filepath=html_path)
     with open(html_path, "r", encoding="utf-8") as f:
         return f.read()
+
+
+@app.get("/explorer", response_class=HTMLResponse, tags=["Explorer"])
+def view_explorer_html():
+    """Renders and serves the interactive Tablet Visual Explorer."""
+    html_path = "data/processed/browser.html"
+    if not os.path.exists(html_path):
+        from src.pipeline import run_pipeline
+        run_pipeline(tool="browser")
+    with open(html_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@app.get("/browser", tags=["Explorer"])
+def redirect_to_explorer():
+    """Convenience redirect to the visual tablet explorer."""
+    return RedirectResponse(url="/explorer")

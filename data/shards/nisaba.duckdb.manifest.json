@@ -1,7 +1,7 @@
 {
   "target_filename": "nisaba.duckdb",
   "total_size_bytes": 589049856,
-  "expected_sha256": "b119201e452c1dcc1745c8c60e5632b691b61bf2ea75295005223a367e3160ef",
+  "expected_sha256": "dee122d12f53423660ddd1089a05cfaf5f88d000c83b3661977726c97d2cc586",
   "chunk_size_bytes": 41943040,
   "total_parts": 15,
   "parts": [
@@ -9,13 +9,13 @@
       "part_index": 1,
       "filename": "nisaba.duckdb.part001",
       "size_bytes": 41943040,
-      "sha256": "26d7d8b67b3cd4750252e8af3dfc75fe538c7024c2029229f17fe8d7e6eba9d9"
+      "sha256": "b6763ffb7a76dad3d0f2c26a23f7374cc31f592b0a48914529f2d00008a69e3a"
     },
     {
       "part_index": 2,
       "filename": "nisaba.duckdb.part002",
       "size_bytes": 41943040,
-      "sha256": "020433b40ad1c7bbea4c0f82bb85c96166cabe1eb25e37a8cb5e0e4614c0a1b2"
+      "sha256": "5de3472e06c812d95395f3a2dd09d0f0b5277b7a5858bc9714dd9b162a1c8a4e"
     },
     {
       "part_index": 3,

@@ -131,6 +131,26 @@ class NetworkGraphRenderer:
       cursor: pointer;
     }}
     .btn:hover {{ background: var(--accent); color: #0b0f19; }}
+
+    .tab-link {{
+      background: #1e293b;
+      border: 1px solid #38bdf8;
+      color: #38bdf8;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: monospace;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-block;
+      margin: 2px;
+      transition: all 0.15s;
+    }}
+    .tab-link:hover {{
+      background: #0284c7;
+      color: #fff;
+      border-color: #7dd3fc;
+    }}
   </style>
 </head>
 <body>
@@ -246,18 +266,35 @@ class NetworkGraphRenderer:
       }}
     }});
 
+    const BASE_EXPLORER = (window.location.protocol === 'file:') ? 'browser.html' : '/explorer';
+
     function inspectNode(node) {{
       const d = node.data();
       const col = commColors[(d.community || 0) % commColors.length];
-      const tabs = (d.tablets || []).map(t => `<span class="pill">${{t}}</span>`).join(' ');
+      const tabs = (d.sample_tablets && d.sample_tablets.length > 0)
+        ? d.sample_tablets.map(t => `<a href="${{BASE_EXPLORER}}#${{t}}" class="tab-link" target="_blank">${{t}}</a>`).join(' ')
+        : '<span style="color:var(--text-muted); font-size:0.8rem;">Historical Ur III transaction official</span>';
+
       document.getElementById('inspector').innerHTML = `
         <div class="node-card" style="border-top: 3px solid ${{col}};">
           <div class="node-title">${{d.label}}</div>
           <div class="node-role">${{d.role || 'Official'}} &bull; Cluster #${{d.community}}</div>
-          <div class="metric-row"><span>Total Tablets:</span> <strong>${{d.tablet_count}}</strong></div>
-          <div class="metric-row"><span>Unique Partners:</span> <strong>${{d.degree}}</strong></div>
-          <div class="metric-row"><span>Betweenness:</span> <strong>${{d.betweenness}}</strong></div>
-          <div class="metric-row"><span>Attested Years:</span> <strong>${{d.years || 'Undated'}}</strong></div>
+          <div class="metric-row"><span>Total Tablets:</span> <strong>${{(d.tablet_count || 0).toLocaleString()}}</strong></div>
+          <div class="metric-row"><span>Bureaucratic Partners:</span> <strong>${{d.degree}}</strong></div>
+          <div class="metric-row"><span>Betweenness Centrality:</span> <strong>${{d.betweenness}}</strong></div>
+          
+          <div style="margin-top: 12px; font-size: 0.8rem; font-weight: 700; color: var(--accent);">
+            Key Attested Tablets (Click to inspect):
+          </div>
+          <div style="margin-top: 6px;">
+            ${{tabs}}
+          </div>
+
+          <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px;">
+            <a href="${{BASE_EXPLORER}}?search=${{encodeURIComponent(d.label)}}" target="_blank" class="btn" style="text-align: center; text-decoration: none; display: block;">
+              🏺 View All Tablets for ${{d.label}}
+            </a>
+          </div>
         </div>
       `;
 
@@ -269,6 +306,32 @@ class NetworkGraphRenderer:
 
     cy.on('tap', 'node', function(evt) {{
       inspectNode(evt.target);
+    }});
+
+    cy.on('tap', 'edge', function(evt) {{
+      const e = evt.target.data();
+      const edgeTabs = (e.tablets && e.tablets.length > 0)
+        ? e.tablets.map(t => `<a href="${{BASE_EXPLORER}}#${{t}}" class="tab-link" target="_blank">${{t}}</a>`).join(' ')
+        : 'Attested in archival transactions';
+
+      document.getElementById('inspector').innerHTML = `
+        <div class="node-card" style="border-top: 3px solid var(--gold);">
+          <div class="node-title">${{e.source}} ↔ ${{e.target}}</div>
+          <div class="node-role">Bureaucratic Transfer Flow</div>
+          <div class="metric-row"><span>Recorded Transactions:</span> <strong>${{(e.weight || 0).toLocaleString()}}</strong></div>
+          <div style="margin-top: 12px; font-size: 0.8rem; font-weight: 700; color: var(--accent);">
+            Corroborating Tablets:
+          </div>
+          <div style="margin-top: 6px;">
+            ${{edgeTabs}}
+          </div>
+          <div style="margin-top: 14px;">
+            <a href="${{BASE_EXPLORER}}?search=${{encodeURIComponent(e.source)}}" target="_blank" class="btn" style="text-align: center; text-decoration: none; display: block;">
+              🏺 Explore Transactions in Tablet Dossier
+            </a>
+          </div>
+        </div>
+      `;
     }});
 
     cy.on('tap', function(evt) {{
