@@ -164,6 +164,9 @@ class NetworkGraphRenderer:
       <span>Bureaucratic Links: <strong id="stat-edges">{cy_data['summary']['total_edges']}</strong></span>
       <span>Chancelleries/Clusters: <strong id="stat-comms">{cy_data['summary']['communities']}</strong></span>
     </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn" onclick="backToDossier()">← Back to Tablet Dossier</button>
+    </div>
   </header>
 
   <div class="main-container">
@@ -263,6 +266,23 @@ class NetworkGraphRenderer:
         componentSpacing: 100,
         nodeOverlap: 20,
         idealEdgeLength: 60
+      }}
+    }});
+
+    window.cy = cy;
+
+    function backToDossier() {{
+      if (window.parent && window.parent.switchView) {{
+        window.parent.switchView('dossier');
+      }} else {{
+        window.location.href = BASE_EXPLORER;
+      }}
+    }}
+
+    window.addEventListener('resize', () => {{
+      if (cy) {{
+        cy.resize();
+        cy.fit();
       }}
     }});
 

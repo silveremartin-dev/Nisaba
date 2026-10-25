@@ -323,18 +323,19 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> <!-- Closes dossier-grid -->
+        </div> <!-- Closes viewDossierContainer -->
 
-            <!-- In-Page Prosopography Graph View (No new tabs) -->
-            <div id="viewGraphContainer" style="display:none; flex:1; height:100%; position:relative;">
-                <div style="position:absolute; top:12px; right:20px; z-index:100; display:flex; gap:8px;">
-                    <button class="nav-btn" onclick="switchView('dossier')">← Back to Tablet Dossier</button>
-                    <a id="btnExternalGraph" href="/api/graph/view" target="_blank" class="nav-btn" title="Open graph in separate window if needed">Open in New Tab ↗</a>
-                </div>
-                <iframe id="graphFrame" src="" style="width:100%; height:100%; border:none; background:#0b0f19;"></iframe>
+        <!-- View 2: In-Page Prosopography Graph View (No new tabs) -->
+        <div id="viewGraphContainer" style="display:none; flex-direction:column; flex:1; height:100%; width:100%; position:relative; overflow:hidden;">
+            <div style="position:absolute; top:12px; right:20px; z-index:100; display:flex; gap:8px;">
+                <button class="nav-btn" onclick="switchView('dossier')">← Back to Tablet Dossier</button>
+                <a id="btnExternalGraph" href="/api/graph/view" target="_blank" class="nav-btn" title="Open graph in separate window if needed">Open in New Tab ↗</a>
             </div>
+            <iframe id="graphFrame" src="" style="width:100%; height:100%; border:none; background:#0b0f19; flex:1;"></iframe>
         </div>
-    </div>
+    </div> <!-- Closes workspace -->
+</div> <!-- Closes app-layout -->
 
     <!-- User Manual Modal -->
     <div class="modal-overlay" id="manualModal">
@@ -412,11 +413,28 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 
             if (view === 'graph') {
                 dossier.style.display = 'none';
-                graph.style.display = 'block';
+                graph.style.display = 'flex';
                 const frame = document.getElementById('graphFrame');
                 const targetSrc = (window.location.protocol === 'file:') ? 'prosopography_graph.html' : `${API_BASE}/api/graph/view`;
-                if (!frame.src || frame.src === 'about:blank' || !frame.src.endsWith(targetSrc)) {
+                if (!frame.src || frame.src === 'about:blank' || !frame.src.includes('graph')) {
                     frame.src = targetSrc;
+                    frame.onload = function() {
+                        try {
+                            if (frame.contentWindow && frame.contentWindow.cy) {
+                                setTimeout(() => {
+                                    frame.contentWindow.cy.resize();
+                                    frame.contentWindow.cy.fit();
+                                }, 150);
+                            }
+                        } catch (e) {}
+                    };
+                } else {
+                    try {
+                        if (frame.contentWindow && frame.contentWindow.cy) {
+                            frame.contentWindow.cy.resize();
+                            frame.contentWindow.cy.fit();
+                        }
+                    } catch (e) {}
                 }
                 btnDossier.classList.remove('active');
                 btnGraph.classList.add('active');
@@ -991,7 +1009,19 @@ class TabletBrowserRenderer:
                 })
 
         sample_items = []
-        for tab in tablets[:50]:
+        tablets_by_id = {t.id_text: t for t in tablets}
+        from src.api.service import CURATED_SHOWCASE_IDS
+        selected_tablets = []
+        for cid in CURATED_SHOWCASE_IDS:
+            if cid in tablets_by_id:
+                selected_tablets.append(tablets_by_id[cid])
+        for t in tablets:
+            if t.id_text not in [st.id_text for st in selected_tablets]:
+                selected_tablets.append(t)
+            if len(selected_tablets) >= 60:
+                break
+
+        for tab in selected_tablets:
             p_clean = tab.id_text.strip().upper()
             local_img = os.path.exists(os.path.join("assets", "real_tablets", f"{p_clean}.jpg"))
             
@@ -1019,6 +1049,8 @@ class TabletBrowserRenderer:
                     "has_local_image": local_img,
                     "local_image_url": f"/assets/real_tablets/{p_clean}.jpg" if local_img else None,
                     "cdli_image_url": f"https://cdli.mpiwg-berlin.mpg.de/dl/photo/{p_clean}.jpg",
+                    "lineart_url": f"https://cdli.mpiwg-berlin.mpg.de/dl/lineart/{p_clean}_l.jpg",
+                    "tn_lineart_url": f"https://cdli.mpiwg-berlin.mpg.de/dl/lineart/{p_clean}_l_tn.jpg",
                 },
                 "metrology": metrology_engine.parse_tablet_metrology(lines_dicts),
                 "chronos_estimate": {

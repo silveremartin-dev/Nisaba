@@ -12,6 +12,52 @@ import pandas as pd
 from src.ledger.metrology import MetrologyEngine
 
 
+CURATED_SHOWCASE_IDS = [
+    # 1. Canonical Cross-Museum Virtual Joins & Reunited Broken Fragments
+    "P131610",  # TCL 02, 5521 + 5522 (Louvre Museum joined fragments, 15 transactions, scribe ur-mes)
+    "P100089",  # AAS 102 + 205 (Physical join of complementary breaks, 11 transactions, scribe lugal-iti-da)
+    "P134231",  # TLB 03, 090 + ASJ 17, 214 107 (Famous Ur III court record / di-til-la)
+    "P142749",  # AAICAB 1/1, pl. 042, 1911-238 + 1911-239 (Ashmolean joined fragment)
+    "P106055",  # BIN 03, 249 (Ur III royal administration dispatch join)
+    "P215079",  # MAD 1, 163 + 165 (Old Akkadian Sargonic joined tablets, 236 transactions)
+    # 2. Megasized Administrative Ledgers & Multi-Column Balance Sheets
+    "P118648",  # MVN 15, 390 (Massive balanced account ledger - 684 transactions!)
+    "P101079",  # AnOr 01, 088 (Major grain & livestock ledger - 438 transactions)
+    "P110592",  # ITT 2, 00723 (Girsu provincial ledger - 412 transactions)
+    "P208520",  # Nisaba 06, 27 (Nisaba series account - 351 transactions)
+    "P110747",  # ITT 2, 00877 (Girsu grand ledger - 282 transactions)
+    "P120649",  # MVN 21, 412 (Grain and flour account - 269 transactions)
+    "P131752",  # TCL 05, 6038 (Great Umma harvest ledger - 245 transactions)
+    "P130358",  # STA 08 (Livestock and offerings account - 236 transactions)
+    "P110694",  # ITT 2, 00824 (Provincial storehouse ledger - 235 transactions)
+    "P212246",  # SANTAG 6, 340 (Livestock audit - 231 transactions)
+    # 3. Famous Royal Bureaus & Chancery Officers
+    "P100001",  # AAS 013 (Classic Umma receipt, full date formula)
+    "P100004",  # AAS 016 (Abba-saga receipt with animal metrology)
+    "P100007",  # AAS 019 (Sealed receipt, scribe da-da-a)
+    "P100015",  # AAS 027 (Account certified by chief archivist lu2-kal-la)
+    "P101001",  # AnOr 01, 010 (Na-lu5 central livestock bureau)
+    "P102015",  # ASJ 03, 074 (In-ta-e3-a cattle bureau)
+    "P103001",  # AUCT 1, 155 (Lu2-kal-la Umma treasure dispatch)
+    "P108001",  # CST 486 (Temple rations & disbursements)
+    "P110001",  # HLC 124 (Girsu royal livestock accounts)
+    "P115001",  # MVN 07, 075 (Girsu wool distribution)
+    "P120001",  # MVN 18, 640 (Ur royal craftsman ledger)
+    # 4. Archaic Proto-Cuneiform Lexical Lists & Pictographs (Uruk IV / III, ca. 3200 BC)
+    "P000001",  # CDLI Lexical 000002, ex. 065 (Archaic proto-cuneiform lexical series)
+    "P000002",  # CDLI Lexical 000002, ex. 066 (Archaic lexical text)
+    "P000019",  # CDLI Lexical 000002, ex. 038 (Archaic clay tablet fragment)
+    "P000031",  # CDLI Lexical 000002, ex. 078 (Archaic join candidate)
+    "P000054",  # CDLI Lexical 000002, ex. 068 (Archaic join pair)
+    # 5. Scribes, Seals & Attributed Chanceries
+    "P504388",  # Contratti Ojeil 58 (Scribe szu-mi-a-bi-ia)
+    "P504382",  # Contratti Ojeil 50 (Scribe mi-gir-{d}suen)
+    "P504384",  # Contratti Ojeil 54 (Scribe a-pil-{d}suen)
+    "P257369",  # SAOC 44, 16 (Scribe u4-du10-mu)
+    "P503163",  # FAOS 02, 041 (Scribe ARAD-{d}nanna)
+]
+
+
 class NisabaDataService:
     """Provides querying capabilities over Nisaba DuckDB tables and analytical Parquet outputs."""
 
@@ -129,10 +175,8 @@ class NisabaDataService:
                         params.extend([search_pattern, search_pattern])
 
             if category == "showcase":
-                showcase_ids = [f"P{100000+i}" for i in range(1, 60)] + [
-                    'P100089', 'P106055', 'P131610', 'P134231', 'P142749', 'P285811'
-                ]
-                where_clauses.append(f"id_text IN ({', '.join([repr(x) for x in showcase_ids])})")
+                id_list_str = ", ".join([repr(x) for x in CURATED_SHOWCASE_IDS])
+                where_clauses.append(f"id_text IN ({id_list_str})")
             elif category == "scribes":
                 where_clauses.append("id_text IN (SELECT id_text FROM author_attributions WHERE identified_scribe != 'Unknown')")
             elif category == "dates":
@@ -145,11 +189,17 @@ class NisabaDataService:
             where_str = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
             total = con.execute(f"SELECT COUNT(*) FROM tablets {where_str}", params).fetchone()[0]
-            # Prioritize Ur III chancery texts (P100000+) by default over archaic Uruk pictographs
+
+            if category == "showcase":
+                cases = " ".join([f"WHEN '{pid}' THEN {i}" for i, pid in enumerate(CURATED_SHOWCASE_IDS)])
+                order_by_clause = f"ORDER BY CASE id_text {cases} ELSE 999 END"
+            else:
+                order_by_clause = "ORDER BY CASE WHEN id_text LIKE 'P1%' THEN 0 ELSE 1 END, id_text ASC"
+
             query = f"""
                 SELECT * FROM tablets 
                 {where_str} 
-                ORDER BY CASE WHEN id_text LIKE 'P1%' THEN 0 ELSE 1 END, id_text 
+                {order_by_clause} 
                 LIMIT ? OFFSET ?
             """
             query_params = list(params) + [limit, offset]
